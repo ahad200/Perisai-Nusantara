@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === Design tokens (PRD Lampiran C.2) ===
+   Tema gelap default (ruang SOC redup). Grafit kebiruan, bukan hitam pekat.
+   Warna severity HANYA untuk severity. Satu aksen (amber redup) dipakai hemat. */
+:root,
+.dark {
+  --bg-base: #0f1216;
+  --bg-surface: #161a20;
+  --bg-raised: #1e232b;
+  --border: #272d37;
+
+  --text: #e6e9ee;
+  --text-muted: #9aa4b2;
+  --text-dim: #6b7480;
+
+  --accent: #c9a24a; /* amber redup */
+  --accent-ink: #11140f; /* teks di atas aksen */
+
+  --sev-critical: #e5484d;
+  --sev-high: #ef8a3c;
+  --sev-medium: #d9c04a;
+  --sev-low: #7e8ba3;
+  --sev-info: #8a94a6;
+
+  color-scheme: dark;
+}
+
+/* Tema terang untuk laporan/cetak (C.2). */
+.light {
+  --bg-base: #f5f7f9;
+  --bg-surface: #ffffff;
+  --bg-raised: #eef1f4;
+  --border: #d6dbe1;
+
+  --text: #1a1f26;
+  --text-muted: #51606f;
+  --text-dim: #7a8694;
+
+  --accent: #8a6d1f;
+  --accent-ink: #ffffff;
+
+  --sev-critical: #c0272d;
+  --sev-high: #b5610f;
+  --sev-medium: #8a7312;
+  --sev-low: #51607a;
+  --sev-info: #5b6676;
+
+  color-scheme: light;
+}
+
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+  body {
+    @apply bg-graphite-base text-ink font-sans antialiased;
+    font-size: 14px;
+  }
+  /* Fokus keyboard selalu terlihat (C.4 aksesibilitas). */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-radius: 2px;
+  }
+  /* Angka rata kolom di tabel. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}

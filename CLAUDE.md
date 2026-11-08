@@ -51,7 +51,8 @@ simulator/       generator log & skenario (M3)
 ## Status Milestone (PRD §A.3)
 - [x] **M1** — Fondasi backend: Docker Compose, FastAPI, PostgreSQL, Alembic,
       `User` & `AuditEntry`, auth JWT + TOTP (MFA), RBAC, audit hash chain + verifikasi.
-- [ ] M2 — Fondasi frontend (Vue 3, design tokens, `/dev/components`, login+MFA, i18n).
+- [x] **M2** — Fondasi frontend (Vue 3, design tokens, `/dev/components`, login+MFA, i18n,
+      layout sidebar/header, halaman Pengguna & Audit terhubung API).
 - [ ] M3 — Aset (K1/K2/K3) + Event + simulator (baseline ≥14 hari + skenario serangan).
 - [ ] M4 — IoC + siklus hidup + import STIX + mirror enrichment lokal.
 - [ ] M5 — DetectionRule + Alert (Sigma, IoC match, ATT&CK) + antrian alert.
