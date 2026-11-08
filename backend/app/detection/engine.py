@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import audit
+from app.detection.anomaly import detect_anomalies
 from app.detection.matcher import (
     column_equality_filter,
     densest_window,
@@ -43,6 +44,8 @@ class Candidate:
     event_ids: list[int] = field(default_factory=list)
     first_ts: datetime | None = None
     last_ts: datetime | None = None
+    score: float | None = None
+    features: dict | None = None
 
 
 def _host_map(db: Session) -> dict[str, int]:
@@ -159,10 +162,34 @@ def _run_ioc(db: Session, rule: DetectionRule) -> list[Candidate]:
     return out
 
 
+def _run_ml(db: Session, rule: DetectionRule) -> list[Candidate]:
+    """ELANG-1: anomali jaringan (IsolationForest) dengan skor & fitur penyebab."""
+    c = rule.content or {}
+    findings = detect_anomalies(
+        db,
+        threshold=float(c.get("threshold", 0.60)),
+        min_count=int(c.get("min_count", 12)),
+    )
+    out: list[Candidate] = []
+    for f in findings:
+        top = ", ".join(f.features.get("top", []))
+        out.append(Candidate(
+            dedup_key=f"elang1:{f.host}:{f.dst_ip}",
+            rule=rule, severity=rule.severity, technique=f.technique,
+            technique_name=f.technique_name, host=f.host,
+            title=f"Anomali jaringan: {f.host} -> {f.dst_ip}",
+            explanation=f"Skor anomali {f.score:.2f}. Fitur penyebab: {top}.",
+            event_ids=f.event_ids, first_ts=f.first_ts, last_ts=f.last_ts,
+            score=f.score, features=f.features,
+        ))
+    return out
+
+
 _RUNNERS = {
     RuleType.THRESHOLD.value: _run_threshold,
     RuleType.SIGMA.value: _run_sigma,
     RuleType.IOC.value: _run_ioc,
+    RuleType.ML.value: _run_ml,
 }
 
 
@@ -194,6 +221,7 @@ def run_detection(
                 asset_id=host_map.get(c.host) if c.host else None, host=c.host,
                 title=c.title, explanation=c.explanation, event_ids=c.event_ids,
                 event_count=len(c.event_ids), status=AlertStatus.NEW.value,
+                anomaly_score=c.score, features=c.features,
                 dedup_key=c.dedup_key, first_event_ts=c.first_ts, last_event_ts=c.last_ts,
             ))
             created += 1

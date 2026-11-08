@@ -40,6 +40,7 @@ class AlertOut(BaseModel):
     event_count: int
     status: str
     assignee: str | None
+    anomaly_score: float | None = None
     first_event_ts: datetime | None
     last_event_ts: datetime | None
     created_at: datetime
@@ -49,6 +50,7 @@ class AlertOut(BaseModel):
 class AlertDetailOut(AlertOut):
     event_ids: list[int] = []
     events: list[EventOut] = []
+    features: dict | None = None
 
 
 class AlertPage(BaseModel):

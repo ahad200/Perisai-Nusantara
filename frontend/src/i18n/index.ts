@@ -162,6 +162,12 @@ const id = {
     shortcuts: "Pintasan: j/k pindah · a assign · e eskalasi · x tutup FP · Enter detail",
     ranDetection: "Deteksi selesai",
     empty: "Tidak ada alert. Jalankan deteksi setelah skenario simulator berjalan.",
+    anomaly: "Anomali ELANG-1",
+    anomalyScore: "Skor anomali",
+    features: "Fitur penyebab",
+    featureValue: "Nilai",
+    baseline: "Baseline",
+    deviation: "Deviasi (z)",
   },
 };
 
@@ -327,6 +333,12 @@ const en: typeof id = {
     shortcuts: "Shortcuts: j/k move · a assign · e escalate · x close FP · Enter detail",
     ranDetection: "Detection complete",
     empty: "No alerts. Run detection after simulator scenarios have run.",
+    anomaly: "ELANG-1 anomaly",
+    anomalyScore: "Anomaly score",
+    features: "Contributing features",
+    featureValue: "Value",
+    baseline: "Baseline",
+    deviation: "Deviation (z)",
   },
 };
 

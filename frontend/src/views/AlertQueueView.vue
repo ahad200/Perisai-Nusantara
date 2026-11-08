@@ -29,13 +29,18 @@ interface Alert {
   status: string;
   assignee: string | null;
   last_event_ts: string | null;
+  anomaly_score: number | null;
 }
 interface EventRow {
   id: number; ts: string; source_type: string; action: string; host: string | null; outcome: string;
 }
+interface Feature {
+  name: string; label: string; value: number; baseline_mean: number; z: number;
+}
 interface AlertDetail extends Alert {
   event_ids: number[];
   events: EventRow[];
+  features: { score: number; dst_ip?: string; model?: string; top?: string[]; features: Feature[] } | null;
 }
 interface AlertPage { items: Alert[]; total: number; }
 
@@ -228,6 +233,7 @@ watch([severity, status, mineOnly], () => { cursor.value = 0; load(); });
             <td class="px-3 py-1.5 font-mono text-xs text-ink-muted">{{ a.rule_code }}</td>
             <td class="px-3 py-1.5 font-mono text-xs text-ink">
               {{ a.technique ?? "—" }}<span v-if="a.technique_name" class="text-ink-dim"> · {{ a.technique_name }}</span>
+              <span v-if="a.anomaly_score != null" class="text-ink-dim"> · {{ t("alert.anomalyScore").toLowerCase() }} {{ a.anomaly_score.toFixed(2) }}</span>
             </td>
             <td class="px-3 py-1.5 text-right font-mono tnum text-ink-muted">{{ a.event_count }}</td>
             <td class="px-3 py-1.5"><StatusBadge :tone="statusTone(a.status)">{{ a.status }}</StatusBadge></td>
@@ -257,6 +263,40 @@ watch([severity, status, mineOnly], () => { cursor.value = 0; load(); });
           <dt class="text-ink-muted">{{ t("alert.explanation") }}</dt>
           <dd class="text-ink-muted">{{ detail.explanation }}</dd>
         </dl>
+
+        <!-- Penjelasan ELANG-1 (anomali) -->
+        <div v-if="detail.features" class="rounded border border-edge bg-graphite-base p-2">
+          <div class="mb-1 flex items-center justify-between">
+            <span class="font-mono text-xs uppercase text-ink">{{ t("alert.anomaly") }}</span>
+            <span class="font-mono text-xs text-ink-muted">
+              {{ t("alert.anomalyScore") }}: <span class="text-ink">{{ detail.features.score.toFixed(3) }}</span>
+            </span>
+          </div>
+          <div class="mb-1 text-xs text-ink-muted">{{ t("alert.features") }}</div>
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-left text-ink-dim">
+                <th class="py-0.5 pr-2 font-medium"></th>
+                <th class="py-0.5 pr-2 text-right font-medium">{{ t("alert.featureValue") }}</th>
+                <th class="py-0.5 pr-2 text-right font-medium">{{ t("alert.baseline") }}</th>
+                <th class="py-0.5 text-right font-medium">{{ t("alert.deviation") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(f, i) in detail.features.features"
+                :key="f.name"
+                :class="['border-t border-edge/50', i < 3 ? 'text-ink' : 'text-ink-muted']"
+              >
+                <td class="py-0.5 pr-2">{{ f.label }}</td>
+                <td class="py-0.5 pr-2 text-right font-mono tnum">{{ f.value }}</td>
+                <td class="py-0.5 pr-2 text-right font-mono tnum text-ink-dim">{{ f.baseline_mean }}</td>
+                <td class="py-0.5 text-right font-mono tnum">{{ f.z > 0 ? "+" : "" }}{{ f.z }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <div>
           <div class="mb-1 text-xs text-ink-muted">{{ t("alert.linkedEvents") }} ({{ detail.event_ids.length }})</div>
           <div class="max-h-52 overflow-auto rounded border border-edge">

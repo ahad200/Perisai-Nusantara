@@ -38,7 +38,8 @@ backend/app/
   ingest/      normalisasi event ke skema umum (M3)
   simulator/   armada aset + baseline historis + skenario serangan (M3)
   intel/       IoC, impor STIX 2.1, mirror enrichment lokal, siklus hidup (M4)
-  detection/   aturan Sigma/threshold + pencocokan IoC -> Alert, pemetaan ATT&CK (M5)
+  detection/   aturan Sigma/threshold + pencocokan IoC -> Alert, pemetaan ATT&CK (M5);
+               ELANG-1 IsolationForest anomali + penjelasan fitur (M6)
   correlation/ soar/ adapters/ agents/ reports/  (milestone berikutnya)
 backend/tests/   pytest
 frontend/        Vue 3 (M2)
@@ -66,7 +67,9 @@ frontend/        Vue 3 (M2)
 - [x] **M5** — Deteksi: model `DetectionRule` + `Alert`, mesin Sigma/threshold + **pencocokan IoC→event**,
       pemetaan **ATT&CK** (T1110/T1486/T1036/T1071/…), **antrian alert** dengan shortcut keyboard
       (j/k navigasi, a assign, e eskalasi, x tutup FP). Analis T1–T3 kini punya izin triase.
-- [ ] M6 — ELANG-1 (IsolationForest) + penjelasan fitur.
+- [x] **M6** — ELANG-1: IsolationForest (implementasi mandiri, tanpa dependensi) dilatih dari
+      baseline M3; deteksi anomali jaringan (beaconing C2) dengan **skor + fitur penyebab**
+      (z-score terhadap baseline) di detail alert. Terintegrasi ke `/detection/run`.
 - [ ] M7 — Incident + korelasi + case management.
 - [ ] M8 — SOAR + Matriks Otonomi + approval/timeout/eskalasi + rollback + dry-run.
 - [ ] M9 — Dashboard Situasi/Eksekutif + coverage ATT&CK + audit UI + ELANG-6 laporan.

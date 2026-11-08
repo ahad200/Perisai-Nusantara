@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -55,6 +55,10 @@ class Alert(Base):
         String(16), nullable=False, default=AlertStatus.NEW.value, index=True
     )
     assignee: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+
+    # Deteksi ML (ELANG-1): skor anomali + fitur penyebab (FR-103). Null untuk alert non-ML.
+    anomaly_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    features: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Kunci deduplikasi agar menjalankan deteksi berulang tidak menduplikasi alert.
     dedup_key: Mapped[str] = mapped_column(String(256), unique=True, index=True, nullable=False)

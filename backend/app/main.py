@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=__version__,
-    description="Platform Pertahanan Siber Adaptif — prototipe (data simulasi). M1–M5.",
+    description="Platform Pertahanan Siber Adaptif — prototipe (data simulasi). M1–M6.",
     lifespan=lifespan,
 )
 

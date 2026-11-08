@@ -60,6 +60,15 @@ DEFAULT_RULES: list[dict] = [
         "description": "Event yang menyentuh IoC aktif (teknik diturunkan dari label IoC).",
         "content": {},
     },
+    {
+        "rule_code": "PNX-ELANG1-001",
+        "name": "ELANG-1 — anomali jaringan (IsolationForest)",
+        "type": RuleType.ML.value,
+        "severity": Severity.HIGH.value,
+        "technique": None, "technique_name": None,
+        "description": "Deteksi anomali dari baseline ≥14 hari. Alert menyertakan skor & fitur penyebab.",
+        "content": {"model": "IsolationForest", "threshold": 0.60, "min_count": 12},
+    },
 ]
 
 
