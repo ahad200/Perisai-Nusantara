@@ -1,4 +1,4 @@
-# Perisai Nusantara X (PN-X) By -Ahad-
+# Prototipe Perisai Nusantara X (PN-X) Angkatan Darat
 
 Prototipe **platform pertahanan siber adaptif** (SOC + SOAR + multi-agent MATA ELANG).
 Dokumen produk: [`docs/PRD-PN-X-v1.2.md`](docs/PRD-PN-X-v1.2.md).
