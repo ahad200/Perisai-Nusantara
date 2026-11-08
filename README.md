@@ -1,16 +1,10 @@
-# Perisai Nusantara (PN-X)
+# Prototipe Platform Perisai Pertahanan Cyber Nusantara X (PN-X) Angkatan Darat
 
 Prototipe **platform pertahanan siber adaptif** (SOC + SOAR + multi-agent MATA ELANG).
 Dokumen produk: [`docs/PRD-PN-X-v1.2.md`](docs/PRD-PN-X-v1.2.md).
 
 > Murni **defensif**, berjalan dengan **data simulasi**. Operasi ofensif/hack-back di luar
 > ruang lingkup (PRD §4.2). Semua adapter perangkat nyata diwakili **mock**.
-
-## Status
-
-**M1 — Fondasi backend** (selesai): FastAPI + PostgreSQL + Alembic, model `User` &
-`AuditEntry`, auth **JWT + TOTP (MFA)**, **RBAC** 9 role, dan **audit hash chain**
-dengan endpoint verifikasi integritas. Roadmap lengkap M1–M10 di [`CLAUDE.md`](CLAUDE.md).
 
 ## Mulai cepat
 
