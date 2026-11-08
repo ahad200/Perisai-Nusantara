@@ -1,0 +1,14 @@
+# PN-X backend — runtime dependencies
+# Catatan: produksi memakai Python 3.12 (lihat Dockerfile). Lokal diuji di 3.14.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+SQLAlchemy>=2.0
+alembic>=1.13
+pydantic>=2.7
+pydantic-settings>=2.3
+PyJWT>=2.9
+bcrypt>=4.1
+pyotp>=2.9
+python-multipart>=0.0.9
+# Driver PostgreSQL untuk runtime (Docker). Di lokal/test memakai SQLite (stdlib).
+psycopg[binary]>=3.2

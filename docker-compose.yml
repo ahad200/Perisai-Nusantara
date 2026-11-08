@@ -1,0 +1,33 @@
+# Stack pengembangan PN-X (M1). Bukan konfigurasi produksi.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pnx
+      POSTGRES_PASSWORD: pnx
+      POSTGRES_DB: pnx
+    ports:
+      - "5432:5432"
+    volumes:
+      - pnx_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pnx"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: dev
+      DATABASE_URL: postgresql+psycopg://pnx:pnx@db:5432/pnx
+      # Ganti untuk non-dev:
+      SECRET_KEY: dev-insecure-change-me-0000000000000000
+    ports:
+      - "8000:8000"
+
+volumes:
+  pnx_pgdata:

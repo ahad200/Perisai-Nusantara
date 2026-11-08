@@ -1,0 +1,5 @@
+# Normalisasi akhir baris ke LF di repo.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.db binary
