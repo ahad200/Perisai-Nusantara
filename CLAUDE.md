@@ -38,7 +38,8 @@ backend/app/
   ingest/      normalisasi event ke skema umum (M3)
   simulator/   armada aset + baseline historis + skenario serangan (M3)
   intel/       IoC, impor STIX 2.1, mirror enrichment lokal, siklus hidup (M4)
-  detection/ correlation/ soar/ adapters/ agents/ reports/  (milestone berikutnya)
+  detection/   aturan Sigma/threshold + pencocokan IoC -> Alert, pemetaan ATT&CK (M5)
+  correlation/ soar/ adapters/ agents/ reports/  (milestone berikutnya)
 backend/tests/   pytest
 frontend/        Vue 3 (M2)
 ```
@@ -62,7 +63,9 @@ frontend/        Vue 3 (M2)
       impor STIX 2.1, tabel `EnrichmentRecord` (mirror WHOIS/GeoIP/reputasi lokal, data contoh),
       halaman IoC (impor, detail + enrichment, aksi siklus hidup). Enrichment **hanya** mirror
       lokal — tanpa egress (§A.5 no.5).
-- [ ] M5 — DetectionRule + Alert (Sigma, IoC match, ATT&CK) + antrian alert.
+- [x] **M5** — Deteksi: model `DetectionRule` + `Alert`, mesin Sigma/threshold + **pencocokan IoC→event**,
+      pemetaan **ATT&CK** (T1110/T1486/T1036/T1071/…), **antrian alert** dengan shortcut keyboard
+      (j/k navigasi, a assign, e eskalasi, x tutup FP). Analis T1–T3 kini punya izin triase.
 - [ ] M6 — ELANG-1 (IsolationForest) + penjelasan fitur.
 - [ ] M7 — Incident + korelasi + case management.
 - [ ] M8 — SOAR + Matriks Otonomi + approval/timeout/eskalasi + rollback + dry-run.
