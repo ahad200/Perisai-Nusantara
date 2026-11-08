@@ -20,19 +20,21 @@ export type Permission =
   | "asset:read"
   | "asset:manage"
   | "event:read"
-  | "sim:run";
+  | "sim:run"
+  | "intel:read"
+  | "intel:manage";
 
 // Izin dasar SOC yang dimiliki semua role (lihat _SOC_BASE di backend).
-const SOC_BASE: Permission[] = ["user:read", "asset:read", "event:read"];
+const SOC_BASE: Permission[] = ["user:read", "asset:read", "event:read", "intel:read"];
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   commander: [...SOC_BASE, "audit:read", "audit:verify"],
-  platform_admin: [...SOC_BASE, "user:create", "user:manage", "audit:read", "audit:verify", "asset:manage", "sim:run"],
+  platform_admin: [...SOC_BASE, "user:create", "user:manage", "audit:read", "audit:verify", "asset:manage", "sim:run", "intel:manage"],
   auditor: [...SOC_BASE, "audit:read", "audit:verify"],
   analyst_t1: [...SOC_BASE],
   analyst_t2: [...SOC_BASE],
   analyst_t3: [...SOC_BASE],
-  ti_officer: [...SOC_BASE],
+  ti_officer: [...SOC_BASE, "intel:manage"],
   responder: [...SOC_BASE],
   purple_team: [...SOC_BASE, "sim:run"],
 };

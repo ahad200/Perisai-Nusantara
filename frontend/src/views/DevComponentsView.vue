@@ -5,6 +5,7 @@ import AppButton from "@/components/ui/AppButton.vue";
 import SeverityBadge from "@/components/ui/SeverityBadge.vue";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import CritBadge from "@/components/ui/CritBadge.vue";
+import TlpBadge from "@/components/ui/TlpBadge.vue";
 import TextInput from "@/components/ui/TextInput.vue";
 import Modal from "@/components/ui/Modal.vue";
 import DataTable, { type Column } from "@/components/ui/DataTable.vue";
@@ -74,6 +75,15 @@ const rows = [
         <CritBadge level="K2" />
         <CritBadge level="K3" />
         <CritBadge :level="null" />
+      </div>
+    </Panel>
+
+    <Panel title="TLP badges (standar berbagi info — bukan severity)">
+      <div class="flex flex-wrap items-center gap-2">
+        <TlpBadge tlp="WHITE" />
+        <TlpBadge tlp="GREEN" />
+        <TlpBadge tlp="AMBER" />
+        <TlpBadge tlp="RED" />
       </div>
     </Panel>
 

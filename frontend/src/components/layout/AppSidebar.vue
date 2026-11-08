@@ -16,6 +16,7 @@ const ALL: NavItem[] = [
   { to: "/", labelKey: "nav.situasi" },
   { to: "/aset", labelKey: "nav.aset", permission: "asset:read" },
   { to: "/event", labelKey: "nav.event", permission: "event:read" },
+  { to: "/intel", labelKey: "nav.intel", permission: "intel:read" },
   { to: "/pengguna", labelKey: "nav.pengguna", permission: "user:read" },
   { to: "/audit", labelKey: "nav.audit", permission: "audit:read" },
   { to: "/dev/components", labelKey: "nav.components", dev: true },

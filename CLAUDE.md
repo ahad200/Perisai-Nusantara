@@ -37,7 +37,8 @@ backend/app/
   api/         router FastAPI per domain
   ingest/      normalisasi event ke skema umum (M3)
   simulator/   armada aset + baseline historis + skenario serangan (M3)
-  detection/ correlation/ soar/ adapters/ intel/ agents/ reports/  (milestone berikutnya)
+  intel/       IoC, impor STIX 2.1, mirror enrichment lokal, siklus hidup (M4)
+  detection/ correlation/ soar/ adapters/ agents/ reports/  (milestone berikutnya)
 backend/tests/   pytest
 frontend/        Vue 3 (M2)
 ```
@@ -57,7 +58,10 @@ frontend/        Vue 3 (M2)
 - [x] **M3** — Aset (K1/K2/K3) + Event, ingest + normalisasi, simulator (baseline ≥14 hari +
       skenario brute force/T1110, beaconing/T1071, ransomware/T1486), halaman inventaris aset
       & penjelajah event + pemicu simulator (dev, role purple_team/platform_admin).
-- [ ] M4 — IoC + siklus hidup + import STIX + mirror enrichment lokal.
+- [x] **M4** — Threat intel: model `IoC` + siklus hidup (kedaluwarsa/whitelist/false-positive),
+      impor STIX 2.1, tabel `EnrichmentRecord` (mirror WHOIS/GeoIP/reputasi lokal, data contoh),
+      halaman IoC (impor, detail + enrichment, aksi siklus hidup). Enrichment **hanya** mirror
+      lokal — tanpa egress (§A.5 no.5).
 - [ ] M5 — DetectionRule + Alert (Sigma, IoC match, ATT&CK) + antrian alert.
 - [ ] M6 — ELANG-1 (IsolationForest) + penjelasan fitur.
 - [ ] M7 — Incident + korelasi + case management.

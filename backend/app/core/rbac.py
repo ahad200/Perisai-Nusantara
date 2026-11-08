@@ -36,11 +36,18 @@ class Permission(StrEnum):
     ASSET_MANAGE = "asset:manage"
     EVENT_READ = "event:read"
     SIM_RUN = "sim:run"  # menjalankan simulator (data simulasi) — non-prod
+    INTEL_READ = "intel:read"
+    INTEL_MANAGE = "intel:manage"  # kelola IoC, impor STIX, siklus hidup
 
 
-# Izin yang dimiliki **semua** role SOC: melihat inventaris aset & menjelajah event.
+# Izin yang dimiliki **semua** role SOC: melihat inventaris aset, event, & intel.
 _SOC_BASE = frozenset(
-    {Permission.USER_READ, Permission.ASSET_READ, Permission.EVENT_READ}
+    {
+        Permission.USER_READ,
+        Permission.ASSET_READ,
+        Permission.EVENT_READ,
+        Permission.INTEL_READ,
+    }
 )
 
 # Pemetaan role -> himpunan izin. Sengaja eksplisit (bukan hierarki implisit)
@@ -55,13 +62,15 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.AUDIT_VERIFY,
         Permission.ASSET_MANAGE,
         Permission.SIM_RUN,
+        Permission.INTEL_MANAGE,
     },
     # Auditor tetap read-only (pemisahan tugas): boleh membaca, tak boleh mengubah.
     Role.AUDITOR: _SOC_BASE | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY},
     Role.ANALYST_T1: _SOC_BASE,
     Role.ANALYST_T2: _SOC_BASE,
     Role.ANALYST_T3: _SOC_BASE,
-    Role.TI_OFFICER: _SOC_BASE,
+    # Threat Intel Officer: kelola IoC, impor STIX, siklus hidup (PRD §3).
+    Role.TI_OFFICER: _SOC_BASE | {Permission.INTEL_MANAGE},
     Role.RESPONDER: _SOC_BASE,
     # Purple team menjalankan simulasi serangan (data simulasi).
     Role.PURPLE_TEAM: _SOC_BASE | {Permission.SIM_RUN},
