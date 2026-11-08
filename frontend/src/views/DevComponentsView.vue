@@ -4,6 +4,7 @@ import Panel from "@/components/ui/Panel.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import SeverityBadge from "@/components/ui/SeverityBadge.vue";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
+import CritBadge from "@/components/ui/CritBadge.vue";
 import TextInput from "@/components/ui/TextInput.vue";
 import Modal from "@/components/ui/Modal.vue";
 import DataTable, { type Column } from "@/components/ui/DataTable.vue";
@@ -64,6 +65,15 @@ const rows = [
         <StatusBadge tone="warn">Menunggu</StatusBadge>
         <StatusBadge tone="danger">Gagal</StatusBadge>
         <StatusBadge tone="muted">Netral</StatusBadge>
+      </div>
+    </Panel>
+
+    <Panel title="Kritikalitas aset (K1/K2/K3 — bukan warna severity)">
+      <div class="flex flex-wrap items-center gap-2">
+        <CritBadge level="K1" />
+        <CritBadge level="K2" />
+        <CritBadge level="K3" />
+        <CritBadge :level="null" />
       </div>
     </Panel>
 

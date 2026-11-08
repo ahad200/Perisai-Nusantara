@@ -35,10 +35,11 @@ backend/app/
   schemas/     Pydantic request/response
   audit/       hash chain + verifikasi
   api/         router FastAPI per domain
-  ingest/ detection/ correlation/ soar/ adapters/ intel/ agents/ reports/  (milestone berikutnya)
+  ingest/      normalisasi event ke skema umum (M3)
+  simulator/   armada aset + baseline historis + skenario serangan (M3)
+  detection/ correlation/ soar/ adapters/ intel/ agents/ reports/  (milestone berikutnya)
 backend/tests/   pytest
 frontend/        Vue 3 (M2)
-simulator/       generator log & skenario (M3)
 ```
 
 ## Konvensi
@@ -53,7 +54,9 @@ simulator/       generator log & skenario (M3)
       `User` & `AuditEntry`, auth JWT + TOTP (MFA), RBAC, audit hash chain + verifikasi.
 - [x] **M2** — Fondasi frontend (Vue 3, design tokens, `/dev/components`, login+MFA, i18n,
       layout sidebar/header, halaman Pengguna & Audit terhubung API).
-- [ ] M3 — Aset (K1/K2/K3) + Event + simulator (baseline ≥14 hari + skenario serangan).
+- [x] **M3** — Aset (K1/K2/K3) + Event, ingest + normalisasi, simulator (baseline ≥14 hari +
+      skenario brute force/T1110, beaconing/T1071, ransomware/T1486), halaman inventaris aset
+      & penjelajah event + pemicu simulator (dev, role purple_team/platform_admin).
 - [ ] M4 — IoC + siklus hidup + import STIX + mirror enrichment lokal.
 - [ ] M5 — DetectionRule + Alert (Sigma, IoC match, ATT&CK) + antrian alert.
 - [ ] M6 — ELANG-1 (IsolationForest) + penjelasan fitur.
@@ -71,5 +74,15 @@ python -m venv .venv && .venv/Scripts/pip install -r requirements-dev.txt
 
 # Stack penuh
 docker compose up --build        # API di http://localhost:8000/docs
-docker compose exec api python -m app.seed   # buat user demo per role
+docker compose exec api python -m app.seed          # user demo per role
+docker compose exec api python -m app.simulator all # aset + baseline 14h + semua serangan
 ```
+
+Simulator (data simulasi) — lihat `app/simulator/`:
+```bash
+python -m app.simulator seed-assets        # tanam armada aset K1/K2/K3
+python -m app.simulator baseline --days 14 # baseline historis bersih
+python -m app.simulator attack all         # bruteforce + beaconing + ransomware
+```
+Atau dari UI: login sebagai `purple_team` → halaman **Event** → "Jalankan skenario"
+(endpoint `POST /dev/simulate`, hanya non-produksi).

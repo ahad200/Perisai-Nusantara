@@ -7,7 +7,8 @@ export interface Column {
   width?: string;
 }
 
-defineProps<{ columns: Column[]; rows: T[]; rowKey?: keyof T }>();
+defineProps<{ columns: Column[]; rows: T[]; rowKey?: keyof T; clickable?: boolean }>();
+const emit = defineEmits<{ (e: "row-click", row: T): void }>();
 </script>
 
 <template>
@@ -32,7 +33,11 @@ defineProps<{ columns: Column[]; rows: T[]; rowKey?: keyof T }>();
         <tr
           v-for="(row, i) in rows"
           :key="rowKey ? String(row[rowKey]) : i"
-          class="border-b border-edge/60 last:border-0 hover:bg-graphite-raised/50"
+          :class="[
+            'border-b border-edge/60 last:border-0 hover:bg-graphite-raised/50',
+            clickable ? 'cursor-pointer' : '',
+          ]"
+          @click="clickable && emit('row-click', row)"
         >
           <td
             v-for="col in columns"

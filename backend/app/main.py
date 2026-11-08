@@ -6,7 +6,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app import __version__
-from app.api import routes_audit, routes_auth, routes_users
+from app.api import (
+    routes_assets,
+    routes_audit,
+    routes_auth,
+    routes_events,
+    routes_sim,
+    routes_users,
+)
 from app.core.config import get_settings
 from app.core.database import Base, engine
 
@@ -27,13 +34,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=__version__,
-    description="Platform Pertahanan Siber Adaptif — prototipe (data simulasi). M1.",
+    description="Platform Pertahanan Siber Adaptif — prototipe (data simulasi). M1–M3.",
     lifespan=lifespan,
 )
 
 app.include_router(routes_auth.router)
 app.include_router(routes_users.router)
 app.include_router(routes_audit.router)
+app.include_router(routes_assets.router)
+app.include_router(routes_events.router)
+app.include_router(routes_sim.router)
 
 
 @app.get("/health", tags=["meta"])

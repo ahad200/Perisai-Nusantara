@@ -32,32 +32,39 @@ class Permission(StrEnum):
     USER_MANAGE = "user:manage"
     AUDIT_READ = "audit:read"
     AUDIT_VERIFY = "audit:verify"
+    ASSET_READ = "asset:read"
+    ASSET_MANAGE = "asset:manage"
+    EVENT_READ = "event:read"
+    SIM_RUN = "sim:run"  # menjalankan simulator (data simulasi) — non-prod
 
+
+# Izin yang dimiliki **semua** role SOC: melihat inventaris aset & menjelajah event.
+_SOC_BASE = frozenset(
+    {Permission.USER_READ, Permission.ASSET_READ, Permission.EVENT_READ}
+)
 
 # Pemetaan role -> himpunan izin. Sengaja eksplisit (bukan hierarki implisit)
 # agar pemisahan tugas mudah diaudit.
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
-    Role.COMMANDER: frozenset(
-        {Permission.USER_READ, Permission.AUDIT_READ, Permission.AUDIT_VERIFY}
-    ),
-    Role.PLATFORM_ADMIN: frozenset(
-        {
-            Permission.USER_READ,
-            Permission.USER_CREATE,
-            Permission.USER_MANAGE,
-            Permission.AUDIT_READ,
-            Permission.AUDIT_VERIFY,
-        }
-    ),
-    Role.AUDITOR: frozenset(
-        {Permission.USER_READ, Permission.AUDIT_READ, Permission.AUDIT_VERIFY}
-    ),
-    Role.ANALYST_T1: frozenset({Permission.USER_READ}),
-    Role.ANALYST_T2: frozenset({Permission.USER_READ}),
-    Role.ANALYST_T3: frozenset({Permission.USER_READ}),
-    Role.TI_OFFICER: frozenset({Permission.USER_READ}),
-    Role.RESPONDER: frozenset({Permission.USER_READ}),
-    Role.PURPLE_TEAM: frozenset({Permission.USER_READ}),
+    Role.COMMANDER: _SOC_BASE | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY},
+    Role.PLATFORM_ADMIN: _SOC_BASE
+    | {
+        Permission.USER_CREATE,
+        Permission.USER_MANAGE,
+        Permission.AUDIT_READ,
+        Permission.AUDIT_VERIFY,
+        Permission.ASSET_MANAGE,
+        Permission.SIM_RUN,
+    },
+    # Auditor tetap read-only (pemisahan tugas): boleh membaca, tak boleh mengubah.
+    Role.AUDITOR: _SOC_BASE | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY},
+    Role.ANALYST_T1: _SOC_BASE,
+    Role.ANALYST_T2: _SOC_BASE,
+    Role.ANALYST_T3: _SOC_BASE,
+    Role.TI_OFFICER: _SOC_BASE,
+    Role.RESPONDER: _SOC_BASE,
+    # Purple team menjalankan simulasi serangan (data simulasi).
+    Role.PURPLE_TEAM: _SOC_BASE | {Permission.SIM_RUN},
 }
 
 

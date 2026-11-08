@@ -16,18 +16,25 @@ export type Permission =
   | "user:create"
   | "user:manage"
   | "audit:read"
-  | "audit:verify";
+  | "audit:verify"
+  | "asset:read"
+  | "asset:manage"
+  | "event:read"
+  | "sim:run";
+
+// Izin dasar SOC yang dimiliki semua role (lihat _SOC_BASE di backend).
+const SOC_BASE: Permission[] = ["user:read", "asset:read", "event:read"];
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  commander: ["user:read", "audit:read", "audit:verify"],
-  platform_admin: ["user:read", "user:create", "user:manage", "audit:read", "audit:verify"],
-  auditor: ["user:read", "audit:read", "audit:verify"],
-  analyst_t1: ["user:read"],
-  analyst_t2: ["user:read"],
-  analyst_t3: ["user:read"],
-  ti_officer: ["user:read"],
-  responder: ["user:read"],
-  purple_team: ["user:read"],
+  commander: [...SOC_BASE, "audit:read", "audit:verify"],
+  platform_admin: [...SOC_BASE, "user:create", "user:manage", "audit:read", "audit:verify", "asset:manage", "sim:run"],
+  auditor: [...SOC_BASE, "audit:read", "audit:verify"],
+  analyst_t1: [...SOC_BASE],
+  analyst_t2: [...SOC_BASE],
+  analyst_t3: [...SOC_BASE],
+  ti_officer: [...SOC_BASE],
+  responder: [...SOC_BASE],
+  purple_team: [...SOC_BASE, "sim:run"],
 };
 
 export function permissionsFor(role: string | null | undefined): Permission[] {

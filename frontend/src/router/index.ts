@@ -13,6 +13,18 @@ const routes: RouteRecordRaw[] = [
   { path: "/login", name: "login", component: () => import("@/views/LoginView.vue"), meta: { public: true } },
   { path: "/", name: "situasi", component: () => import("@/views/SituasiView.vue") },
   {
+    path: "/aset",
+    name: "aset",
+    component: () => import("@/views/AsetView.vue"),
+    meta: { permission: "asset:read" },
+  },
+  {
+    path: "/event",
+    name: "event",
+    component: () => import("@/views/EventView.vue"),
+    meta: { permission: "event:read" },
+  },
+  {
     path: "/pengguna",
     name: "pengguna",
     component: () => import("@/views/PenggunaView.vue"),
