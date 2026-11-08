@@ -38,6 +38,10 @@ class Permission(StrEnum):
     SIM_RUN = "sim:run"  # menjalankan simulator (data simulasi) — non-prod
     INTEL_READ = "intel:read"
     INTEL_MANAGE = "intel:manage"  # kelola IoC, impor STIX, siklus hidup
+    ALERT_READ = "alert:read"
+    ALERT_TRIAGE = "alert:triage"  # assign / eskalasi / tutup FP
+    DETECT_RUN = "detect:run"      # jalankan mesin deteksi
+    DETECT_MANAGE = "detect:manage"  # kelola/seed aturan deteksi
 
 
 # Izin yang dimiliki **semua** role SOC: melihat inventaris aset, event, & intel.
@@ -47,13 +51,18 @@ _SOC_BASE = frozenset(
         Permission.ASSET_READ,
         Permission.EVENT_READ,
         Permission.INTEL_READ,
+        Permission.ALERT_READ,
     }
 )
+
+# Izin triase alert: dimiliki analis T1–T3 (operasi antrian alert).
+_ANALYST_TRIAGE = frozenset({Permission.ALERT_TRIAGE, Permission.DETECT_RUN})
 
 # Pemetaan role -> himpunan izin. Sengaja eksplisit (bukan hierarki implisit)
 # agar pemisahan tugas mudah diaudit.
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
-    Role.COMMANDER: _SOC_BASE | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY},
+    Role.COMMANDER: _SOC_BASE
+    | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY, Permission.ALERT_TRIAGE},
     Role.PLATFORM_ADMIN: _SOC_BASE
     | {
         Permission.USER_CREATE,
@@ -63,17 +72,20 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.ASSET_MANAGE,
         Permission.SIM_RUN,
         Permission.INTEL_MANAGE,
+        Permission.ALERT_TRIAGE,
+        Permission.DETECT_RUN,
+        Permission.DETECT_MANAGE,
     },
     # Auditor tetap read-only (pemisahan tugas): boleh membaca, tak boleh mengubah.
     Role.AUDITOR: _SOC_BASE | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY},
-    Role.ANALYST_T1: _SOC_BASE,
-    Role.ANALYST_T2: _SOC_BASE,
-    Role.ANALYST_T3: _SOC_BASE,
+    Role.ANALYST_T1: _SOC_BASE | _ANALYST_TRIAGE,
+    Role.ANALYST_T2: _SOC_BASE | _ANALYST_TRIAGE,
+    Role.ANALYST_T3: _SOC_BASE | _ANALYST_TRIAGE | {Permission.DETECT_MANAGE},
     # Threat Intel Officer: kelola IoC, impor STIX, siklus hidup (PRD §3).
     Role.TI_OFFICER: _SOC_BASE | {Permission.INTEL_MANAGE},
     Role.RESPONDER: _SOC_BASE,
     # Purple team menjalankan simulasi serangan (data simulasi).
-    Role.PURPLE_TEAM: _SOC_BASE | {Permission.SIM_RUN},
+    Role.PURPLE_TEAM: _SOC_BASE | {Permission.SIM_RUN, Permission.DETECT_RUN},
 }
 
 

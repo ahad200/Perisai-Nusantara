@@ -31,6 +31,12 @@ const routes: RouteRecordRaw[] = [
     meta: { permission: "intel:read" },
   },
   {
+    path: "/alerts",
+    name: "alerts",
+    component: () => import("@/views/AlertQueueView.vue"),
+    meta: { permission: "alert:read" },
+  },
+  {
     path: "/pengguna",
     name: "pengguna",
     component: () => import("@/views/PenggunaView.vue"),

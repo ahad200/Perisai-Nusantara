@@ -22,21 +22,26 @@ export type Permission =
   | "event:read"
   | "sim:run"
   | "intel:read"
-  | "intel:manage";
+  | "intel:manage"
+  | "alert:read"
+  | "alert:triage"
+  | "detect:run"
+  | "detect:manage";
 
 // Izin dasar SOC yang dimiliki semua role (lihat _SOC_BASE di backend).
-const SOC_BASE: Permission[] = ["user:read", "asset:read", "event:read", "intel:read"];
+const SOC_BASE: Permission[] = ["user:read", "asset:read", "event:read", "intel:read", "alert:read"];
+const ANALYST_TRIAGE: Permission[] = ["alert:triage", "detect:run"];
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  commander: [...SOC_BASE, "audit:read", "audit:verify"],
-  platform_admin: [...SOC_BASE, "user:create", "user:manage", "audit:read", "audit:verify", "asset:manage", "sim:run", "intel:manage"],
+  commander: [...SOC_BASE, "audit:read", "audit:verify", "alert:triage"],
+  platform_admin: [...SOC_BASE, "user:create", "user:manage", "audit:read", "audit:verify", "asset:manage", "sim:run", "intel:manage", "alert:triage", "detect:run", "detect:manage"],
   auditor: [...SOC_BASE, "audit:read", "audit:verify"],
-  analyst_t1: [...SOC_BASE],
-  analyst_t2: [...SOC_BASE],
-  analyst_t3: [...SOC_BASE],
+  analyst_t1: [...SOC_BASE, ...ANALYST_TRIAGE],
+  analyst_t2: [...SOC_BASE, ...ANALYST_TRIAGE],
+  analyst_t3: [...SOC_BASE, ...ANALYST_TRIAGE, "detect:manage"],
   ti_officer: [...SOC_BASE, "intel:manage"],
   responder: [...SOC_BASE],
-  purple_team: [...SOC_BASE, "sim:run"],
+  purple_team: [...SOC_BASE, "sim:run", "detect:run"],
 };
 
 export function permissionsFor(role: string | null | undefined): Permission[] {

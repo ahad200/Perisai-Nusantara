@@ -2,8 +2,15 @@
 
 Import semua model di sini agar metadata Base terisi untuk Alembic & create_all.
 """
+from app.models.alert import Alert, AlertStatus
 from app.models.asset import Asset, Criticality
 from app.models.audit import AuditEntry
+from app.models.detection import (
+    DetectionRule,
+    RuleStatus,
+    RuleType,
+    Severity,
+)
 from app.models.enrichment import EnrichmentKind, EnrichmentRecord
 from app.models.event import Event
 from app.models.ioc import IoC, IoCStatus, IoCType, Tlp
@@ -21,4 +28,10 @@ __all__ = [
     "Tlp",
     "EnrichmentRecord",
     "EnrichmentKind",
+    "DetectionRule",
+    "RuleType",
+    "RuleStatus",
+    "Severity",
+    "Alert",
+    "AlertStatus",
 ]
