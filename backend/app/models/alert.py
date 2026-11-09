@@ -56,6 +56,11 @@ class Alert(Base):
     )
     assignee: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
 
+    # Keanggotaan insiden (M7): diisi oleh mesin korelasi. Null = belum dikorelasi.
+    incident_id: Mapped[int | None] = mapped_column(
+        ForeignKey("incidents.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
     # Deteksi ML (ELANG-1): skor anomali + fitur penyebab (FR-103). Null untuk alert non-ML.
     anomaly_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     features: Mapped[dict | None] = mapped_column(JSON, nullable=True)

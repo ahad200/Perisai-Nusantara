@@ -13,6 +13,7 @@ from app.models.detection import (
 )
 from app.models.enrichment import EnrichmentKind, EnrichmentRecord
 from app.models.event import Event
+from app.models.incident import Incident, IncidentNote, IncidentStatus, NoteKind
 from app.models.ioc import IoC, IoCStatus, IoCType, Tlp
 from app.models.user import User
 
@@ -34,4 +35,8 @@ __all__ = [
     "Severity",
     "Alert",
     "AlertStatus",
+    "Incident",
+    "IncidentNote",
+    "IncidentStatus",
+    "NoteKind",
 ]

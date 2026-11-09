@@ -42,6 +42,8 @@ class Permission(StrEnum):
     ALERT_TRIAGE = "alert:triage"  # assign / eskalasi / tutup FP
     DETECT_RUN = "detect:run"      # jalankan mesin deteksi
     DETECT_MANAGE = "detect:manage"  # kelola/seed aturan deteksi
+    INCIDENT_READ = "incident:read"
+    INCIDENT_MANAGE = "incident:manage"  # korelasi, status, penugasan, catatan kasus
 
 
 # Izin yang dimiliki **semua** role SOC: melihat inventaris aset, event, & intel.
@@ -52,6 +54,7 @@ _SOC_BASE = frozenset(
         Permission.EVENT_READ,
         Permission.INTEL_READ,
         Permission.ALERT_READ,
+        Permission.INCIDENT_READ,
     }
 )
 
@@ -62,7 +65,12 @@ _ANALYST_TRIAGE = frozenset({Permission.ALERT_TRIAGE, Permission.DETECT_RUN})
 # agar pemisahan tugas mudah diaudit.
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
     Role.COMMANDER: _SOC_BASE
-    | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY, Permission.ALERT_TRIAGE},
+    | {
+        Permission.AUDIT_READ,
+        Permission.AUDIT_VERIFY,
+        Permission.ALERT_TRIAGE,
+        Permission.INCIDENT_MANAGE,
+    },
     Role.PLATFORM_ADMIN: _SOC_BASE
     | {
         Permission.USER_CREATE,
@@ -75,15 +83,20 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.ALERT_TRIAGE,
         Permission.DETECT_RUN,
         Permission.DETECT_MANAGE,
+        Permission.INCIDENT_MANAGE,
     },
     # Auditor tetap read-only (pemisahan tugas): boleh membaca, tak boleh mengubah.
     Role.AUDITOR: _SOC_BASE | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY},
     Role.ANALYST_T1: _SOC_BASE | _ANALYST_TRIAGE,
-    Role.ANALYST_T2: _SOC_BASE | _ANALYST_TRIAGE,
-    Role.ANALYST_T3: _SOC_BASE | _ANALYST_TRIAGE | {Permission.DETECT_MANAGE},
+    # T2/T3 mengelola insiden (korelasi alert -> kasus, siklus respons).
+    Role.ANALYST_T2: _SOC_BASE | _ANALYST_TRIAGE | {Permission.INCIDENT_MANAGE},
+    Role.ANALYST_T3: _SOC_BASE
+    | _ANALYST_TRIAGE
+    | {Permission.DETECT_MANAGE, Permission.INCIDENT_MANAGE},
     # Threat Intel Officer: kelola IoC, impor STIX, siklus hidup (PRD §3).
     Role.TI_OFFICER: _SOC_BASE | {Permission.INTEL_MANAGE},
-    Role.RESPONDER: _SOC_BASE,
+    # Responder: pemilik alami penanganan insiden (containment).
+    Role.RESPONDER: _SOC_BASE | {Permission.INCIDENT_MANAGE},
     # Purple team menjalankan simulasi serangan (data simulasi).
     Role.PURPLE_TEAM: _SOC_BASE | {Permission.SIM_RUN, Permission.DETECT_RUN},
 }

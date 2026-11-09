@@ -40,7 +40,8 @@ backend/app/
   intel/       IoC, impor STIX 2.1, mirror enrichment lokal, siklus hidup (M4)
   detection/   aturan Sigma/threshold + pencocokan IoC -> Alert, pemetaan ATT&CK (M5);
                ELANG-1 IsolationForest anomali + penjelasan fitur (M6)
-  correlation/ soar/ adapters/ agents/ reports/  (milestone berikutnya)
+  correlation/ korelasi alert -> Insiden (per entitas) + case management (M7)
+  soar/ adapters/ agents/ reports/  (milestone berikutnya)
 backend/tests/   pytest
 frontend/        Vue 3 (M2)
 ```
@@ -70,7 +71,12 @@ frontend/        Vue 3 (M2)
 - [x] **M6** — ELANG-1: IsolationForest (implementasi mandiri, tanpa dependensi) dilatih dari
       baseline M3; deteksi anomali jaringan (beaconing C2) dengan **skor + fitur penyebab**
       (z-score terhadap baseline) di detail alert. Terintegrasi ke `/detection/run`.
-- [ ] M7 — Incident + korelasi + case management.
+- [x] **M7** — Insiden + korelasi + case management: model `Incident` + `IncidentNote`,
+      mesin korelasi alert->insiden per entitas (host/aset) dengan `correlation_key`
+      idempotent, agregasi **teknik ATT&CK** + severity tertinggi, siklus respons
+      (open/investigating/contained/closed), **linimasa kasus** (catatan + jejak
+      status/penugasan), halaman Insiden + detail. Role responder/T2/T3/commander/admin
+      punya `incident:manage`.
 - [ ] M8 — SOAR + Matriks Otonomi + approval/timeout/eskalasi + rollback + dry-run.
 - [ ] M9 — Dashboard Situasi/Eksekutif + coverage ATT&CK + audit UI + ELANG-6 laporan.
 - [ ] M10 — (F2) Agen LLM (Ollama) + AttributionHypothesis.
