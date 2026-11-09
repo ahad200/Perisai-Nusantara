@@ -44,6 +44,10 @@ class Permission(StrEnum):
     DETECT_MANAGE = "detect:manage"  # kelola/seed aturan deteksi
     INCIDENT_READ = "incident:read"
     INCIDENT_MANAGE = "incident:manage"  # korelasi, status, penugasan, catatan kasus
+    SOAR_READ = "soar:read"        # lihat playbook, run, approval, notifikasi
+    SOAR_EXECUTE = "soar:execute"  # jalankan playbook, rollback (ELANG-4 responder)
+    SOAR_APPROVE = "soar:approve"  # setujui/tolak approval (sesuai tier)
+    SOAR_MANAGE = "soar:manage"    # seed playbook (admin), break-glass (commander)
 
 
 # Izin yang dimiliki **semua** role SOC: melihat inventaris aset, event, & intel.
@@ -55,6 +59,7 @@ _SOC_BASE = frozenset(
         Permission.INTEL_READ,
         Permission.ALERT_READ,
         Permission.INCIDENT_READ,
+        Permission.SOAR_READ,
     }
 )
 
@@ -70,6 +75,9 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.AUDIT_VERIFY,
         Permission.ALERT_TRIAGE,
         Permission.INCIDENT_MANAGE,
+        # Commander: menyetujui approval + mengaktifkan break-glass (§7 no.3).
+        Permission.SOAR_APPROVE,
+        Permission.SOAR_MANAGE,
     },
     Role.PLATFORM_ADMIN: _SOC_BASE
     | {
@@ -84,19 +92,27 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.DETECT_RUN,
         Permission.DETECT_MANAGE,
         Permission.INCIDENT_MANAGE,
+        Permission.SOAR_EXECUTE,
+        Permission.SOAR_APPROVE,
+        Permission.SOAR_MANAGE,
     },
     # Auditor tetap read-only (pemisahan tugas): boleh membaca, tak boleh mengubah.
     Role.AUDITOR: _SOC_BASE | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY},
     Role.ANALYST_T1: _SOC_BASE | _ANALYST_TRIAGE,
     # T2/T3 mengelola insiden (korelasi alert -> kasus, siklus respons).
-    Role.ANALYST_T2: _SOC_BASE | _ANALYST_TRIAGE | {Permission.INCIDENT_MANAGE},
+    Role.ANALYST_T2: _SOC_BASE | _ANALYST_TRIAGE | {Permission.INCIDENT_MANAGE, Permission.SOAR_APPROVE},
     Role.ANALYST_T3: _SOC_BASE
     | _ANALYST_TRIAGE
-    | {Permission.DETECT_MANAGE, Permission.INCIDENT_MANAGE},
+    | {
+        Permission.DETECT_MANAGE,
+        Permission.INCIDENT_MANAGE,
+        Permission.SOAR_EXECUTE,
+        Permission.SOAR_APPROVE,
+    },
     # Threat Intel Officer: kelola IoC, impor STIX, siklus hidup (PRD §3).
     Role.TI_OFFICER: _SOC_BASE | {Permission.INTEL_MANAGE},
-    # Responder: pemilik alami penanganan insiden (containment).
-    Role.RESPONDER: _SOC_BASE | {Permission.INCIDENT_MANAGE},
+    # Responder (ELANG-4): satu-satunya agen yang mengeksekusi playbook (§6).
+    Role.RESPONDER: _SOC_BASE | {Permission.INCIDENT_MANAGE, Permission.SOAR_EXECUTE},
     # Purple team menjalankan simulasi serangan (data simulasi).
     Role.PURPLE_TEAM: _SOC_BASE | {Permission.SIM_RUN, Permission.DETECT_RUN},
 }

@@ -43,6 +43,12 @@ const routes: RouteRecordRaw[] = [
     meta: { permission: "incident:read" },
   },
   {
+    path: "/soar",
+    name: "soar",
+    component: () => import("@/views/SoarView.vue"),
+    meta: { permission: "soar:read" },
+  },
+  {
     path: "/pengguna",
     name: "pengguna",
     component: () => import("@/views/PenggunaView.vue"),

@@ -28,21 +28,25 @@ export type Permission =
   | "detect:run"
   | "detect:manage"
   | "incident:read"
-  | "incident:manage";
+  | "incident:manage"
+  | "soar:read"
+  | "soar:execute"
+  | "soar:approve"
+  | "soar:manage";
 
 // Izin dasar SOC yang dimiliki semua role (lihat _SOC_BASE di backend).
-const SOC_BASE: Permission[] = ["user:read", "asset:read", "event:read", "intel:read", "alert:read", "incident:read"];
+const SOC_BASE: Permission[] = ["user:read", "asset:read", "event:read", "intel:read", "alert:read", "incident:read", "soar:read"];
 const ANALYST_TRIAGE: Permission[] = ["alert:triage", "detect:run"];
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  commander: [...SOC_BASE, "audit:read", "audit:verify", "alert:triage", "incident:manage"],
-  platform_admin: [...SOC_BASE, "user:create", "user:manage", "audit:read", "audit:verify", "asset:manage", "sim:run", "intel:manage", "alert:triage", "detect:run", "detect:manage", "incident:manage"],
+  commander: [...SOC_BASE, "audit:read", "audit:verify", "alert:triage", "incident:manage", "soar:approve", "soar:manage"],
+  platform_admin: [...SOC_BASE, "user:create", "user:manage", "audit:read", "audit:verify", "asset:manage", "sim:run", "intel:manage", "alert:triage", "detect:run", "detect:manage", "incident:manage", "soar:execute", "soar:approve", "soar:manage"],
   auditor: [...SOC_BASE, "audit:read", "audit:verify"],
   analyst_t1: [...SOC_BASE, ...ANALYST_TRIAGE],
-  analyst_t2: [...SOC_BASE, ...ANALYST_TRIAGE, "incident:manage"],
-  analyst_t3: [...SOC_BASE, ...ANALYST_TRIAGE, "detect:manage", "incident:manage"],
+  analyst_t2: [...SOC_BASE, ...ANALYST_TRIAGE, "incident:manage", "soar:approve"],
+  analyst_t3: [...SOC_BASE, ...ANALYST_TRIAGE, "detect:manage", "incident:manage", "soar:execute", "soar:approve"],
   ti_officer: [...SOC_BASE, "intel:manage"],
-  responder: [...SOC_BASE, "incident:manage"],
+  responder: [...SOC_BASE, "incident:manage", "soar:execute"],
   purple_team: [...SOC_BASE, "sim:run", "detect:run"],
 };
 

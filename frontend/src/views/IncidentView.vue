@@ -42,6 +42,8 @@ interface IncidentPage { items: Incident[]; total: number }
 const { t } = useI18n();
 const auth = useAuthStore();
 const canManage = computed(() => auth.can("incident:manage"));
+const canExecute = computed(() => auth.can("soar:execute"));
+const runMsg = ref<string | null>(null);
 
 const items = ref<Incident[]>([]);
 const total = ref(0);
@@ -108,6 +110,7 @@ const statusDraft = ref("");
 async function openDetail(id: number) {
   detailOpen.value = true;
   detail.value = null;
+  runMsg.value = null;
   detail.value = await apiFetch<IncidentDetail>(`/incidents/${id}`);
   statusDraft.value = detail.value.status;
 }
@@ -132,6 +135,19 @@ async function addNote() {
   await apiFetch(`/incidents/${detail.value.id}/notes`, { method: "POST", body: { body: noteBody.value.trim() } });
   noteBody.value = "";
   await refreshDetail();
+}
+
+async function runPlaybook(mode: "auto" | "dry_run") {
+  if (!detail.value) return;
+  runMsg.value = null;
+  try {
+    const r = await apiFetch<{ id: number; status: string; playbook_code: string }>(
+      "/soar/run", { method: "POST", body: { incident_id: detail.value.id, mode } },
+    );
+    runMsg.value = `${t("incident.runStarted")}: ${r.playbook_code} → ${r.status}`;
+  } catch (e) {
+    runMsg.value = e instanceof ApiError ? e.message : "Gagal";
+  }
 }
 
 function noteTone(kind: string): "ok" | "warn" | "danger" | "muted" {
@@ -301,11 +317,15 @@ watch([severity, status, activeOnly], load);
             <AppButton size="sm" variant="default" @click="addNote">{{ t("incident.addNote") }}</AppButton>
           </div>
         </div>
+
+        <p v-if="runMsg" class="font-mono text-xs text-accent">{{ runMsg }}</p>
       </div>
       <SkeletonRow v-else :rows="5" />
 
-      <template v-if="canManage && detail" #footer>
-        <AppButton size="sm" variant="primary" @click="assign">{{ t("incident.assign") }}</AppButton>
+      <template v-if="(canManage || canExecute) && detail" #footer>
+        <AppButton v-if="canManage" size="sm" variant="primary" @click="assign">{{ t("incident.assign") }}</AppButton>
+        <AppButton v-if="canExecute" size="sm" variant="default" @click="runPlaybook('auto')">{{ t("incident.runPlaybook") }}</AppButton>
+        <AppButton v-if="canExecute" size="sm" variant="ghost" @click="runPlaybook('dry_run')">{{ t("incident.dryRun") }}</AppButton>
       </template>
     </Modal>
   </div>

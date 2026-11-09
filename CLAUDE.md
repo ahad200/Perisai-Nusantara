@@ -41,7 +41,9 @@ backend/app/
   detection/   aturan Sigma/threshold + pencocokan IoC -> Alert, pemetaan ATT&CK (M5);
                ELANG-1 IsolationForest anomali + penjelasan fitur (M6)
   correlation/ korelasi alert -> Insiden (per entitas) + case management (M7)
-  soar/ adapters/ agents/ reports/  (milestone berikutnya)
+  soar/        playbook + Matriks Otonomi (config) + approval/timeout/eskalasi +
+               rollback + dry-run + adapter mock + notifikasi in-app (M8)
+  agents/ reports/  (milestone berikutnya)
 backend/tests/   pytest
 frontend/        Vue 3 (M2)
 ```
@@ -77,7 +79,14 @@ frontend/        Vue 3 (M2)
       (open/investigating/contained/closed), **linimasa kasus** (catatan + jejak
       status/penugasan), halaman Insiden + detail. Role responder/T2/T3/commander/admin
       punya `incident:manage`.
-- [ ] M8 — SOAR + Matriks Otonomi + approval/timeout/eskalasi + rollback + dry-run.
+- [x] **M8** — SOAR: model `Playbook`/`PlaybookRun`/`ActionExecution`/`Approval`/
+      `Notification`/`BreakGlass`; **Matriks Otonomi** (§7) dari konfigurasi
+      `autonomy_matrix.json` (bukan hardcode); keputusan auto/approval = severity ×
+      kritikalitas; **approval + timeout + eskalasi** (T2→T3→Commander; High×K2
+      timeout→AUTO; K1 tanpa auto); **rollback** (FR-304); **dry-run** (FR-306);
+      adapter **mock** (§A.5 no.8); notifikasi in-app; **break-glass** (§7 no.3);
+      halaman SOAR (approval, run, rollback, break-glass) + "jalankan playbook" dari
+      detail insiden. Matriks teruji untuk **semua** kombinasi severity×kritikalitas.
 - [ ] M9 — Dashboard Situasi/Eksekutif + coverage ATT&CK + audit UI + ELANG-6 laporan.
 - [ ] M10 — (F2) Agen LLM (Ollama) + AttributionHypothesis.
 

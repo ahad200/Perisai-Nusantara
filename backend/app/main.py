@@ -16,6 +16,7 @@ from app.api import (
     routes_incidents,
     routes_intel,
     routes_sim,
+    routes_soar,
     routes_users,
 )
 from app.core.config import get_settings
@@ -38,7 +39,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=__version__,
-    description="Platform Pertahanan Siber Adaptif — prototipe (data simulasi). M1–M7.",
+    description="Platform Pertahanan Siber Adaptif — prototipe (data simulasi). M1–M8.",
     lifespan=lifespan,
 )
 
@@ -51,6 +52,7 @@ app.include_router(routes_intel.router)
 app.include_router(routes_detection.router)
 app.include_router(routes_alerts.router)
 app.include_router(routes_incidents.router)
+app.include_router(routes_soar.router)
 app.include_router(routes_sim.router)
 
 
