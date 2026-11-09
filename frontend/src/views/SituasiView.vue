@@ -113,7 +113,9 @@ onMounted(load);
                 <div
                   class="h-full rounded-sm"
                   :style="{
-                    width: Math.max(2, (data.incidents_by_severity[s] / Math.max(1, data.active_incidents)) * 100) + '%',
+                    width: data.incidents_by_severity[s] > 0
+                      ? Math.max(4, (data.incidents_by_severity[s] / Math.max(1, data.active_incidents)) * 100) + '%'
+                      : '0%',
                     backgroundColor: `var(--sev-${s})`,
                   }"
                 />
@@ -145,7 +147,7 @@ onMounted(load);
         <Panel title="Kesehatan sumber data">
           <table class="w-full text-sm">
             <tbody>
-              <tr v-for="s in data.data_sources" :key="s.source" class="border-b border-edge/50 last:border-0">
+              <tr v-for="s in data.data_sources" :key="s.source" class="border-b border-edge/50 last:border-0 hover:bg-graphite-raised/50">
                 <td class="py-1 font-mono text-ink">{{ s.source }}</td>
                 <td class="py-1 text-right text-ink-muted">{{ s.events }} ev</td>
                 <td class="py-1 text-right text-ink-dim">
@@ -167,7 +169,7 @@ onMounted(load);
           <div
             v-for="seg in data.segments"
             :key="seg.segment"
-            class="rounded border bg-graphite-raised p-3"
+            class="rounded border bg-graphite-raised p-3 transition-colors hover:border-ink-dim"
             :class="seg.active_incidents ? 'border-sev-medium/50' : 'border-edge'"
           >
             <div class="flex items-center justify-between">

@@ -211,6 +211,14 @@ onMounted(load);
     <template v-else>
       <DataTable :columns="columns()" :rows="rows" row-key="id" clickable @row-click="openDetail">
         <template #[`cell:tlp`]="{ value }"><TlpBadge :tlp="value as string" /></template>
+        <template #[`cell:confidence`]="{ value }">
+          <div class="flex items-center justify-end gap-1.5" :title="`keyakinan ${value}/100`">
+            <div class="h-1 w-10 overflow-hidden rounded-sm bg-graphite-raised">
+              <div class="h-full rounded-sm bg-accent/70" :style="{ width: Number(value) + '%' }" />
+            </div>
+            <span class="w-6 text-right font-mono tabular-nums text-ink">{{ value }}</span>
+          </div>
+        </template>
         <template #[`cell:effective_status`]="{ value }">
           <StatusBadge :tone="statusTone(value as string)">{{ value }}</StatusBadge>
         </template>
@@ -232,7 +240,7 @@ onMounted(load);
           <dt class="text-ink-muted">{{ t("intel.blockable") }}</dt>
           <dd class="text-ink">{{ detail.blockable ? t("intel.yes") : t("intel.no") }}</dd>
           <dt class="text-ink-muted">{{ t("intel.confidence") }}</dt>
-          <dd class="font-mono text-ink">{{ detail.confidence }}</dd>
+          <dd class="font-mono text-ink">{{ detail.confidence }}<span class="text-ink-dim">/100</span></dd>
           <dt class="text-ink-muted">{{ t("intel.source") }}</dt>
           <dd class="text-ink">{{ detail.source }}</dd>
           <dt class="text-ink-muted">{{ t("intel.expires") }}</dt>

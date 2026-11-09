@@ -9,6 +9,7 @@ import CritBadge from "@/components/ui/CritBadge.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import Modal from "@/components/ui/Modal.vue";
 import { apiFetch, ApiError } from "@/lib/api";
+import { normalizeRole } from "@/lib/rbac";
 import { formatWIB } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth";
 import { useI18n } from "vue-i18n";
@@ -146,13 +147,15 @@ onMounted(load);
       </div>
     </div>
 
-    <!-- Break-glass banner -->
+    <!-- Break-glass banner (memakai token severity, konsisten tema gelap/terang) -->
     <div
       v-if="breakGlass"
-      class="rounded border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-amber-300"
+      class="flex flex-wrap items-center gap-2 rounded border border-sev-critical/50 bg-sev-critical/10 px-3 py-2 text-sm"
     >
-      ⚠ {{ $t("soar.breakGlassActive") }} — {{ breakGlass.reason }}
-      ({{ breakGlass.activated_by }}, s/d {{ formatWIB(breakGlass.expires_at) }})
+      <StatusBadge tone="danger">{{ $t("soar.breakGlassActive") }}</StatusBadge>
+      <span class="text-ink-muted">
+        {{ breakGlass.reason }} — {{ normalizeRole(breakGlass.activated_by) }}, s/d {{ formatWIB(breakGlass.expires_at) }}
+      </span>
     </div>
 
     <SkeletonRow v-if="loading" :rows="6" />
@@ -184,7 +187,7 @@ onMounted(load);
                 <td class="px-3 py-1.5"><SeverityBadge :severity="(a.severity as Sev)" /></td>
                 <td class="px-3 py-1.5"><CritBadge :level="a.criticality" /></td>
                 <td class="px-3 py-1.5 font-mono text-ink">{{ a.action }}</td>
-                <td class="px-3 py-1.5 font-mono text-xs text-ink-muted">{{ a.required_tier }}</td>
+                <td class="px-3 py-1.5 font-mono text-xs text-ink-muted">{{ normalizeRole(a.required_tier) }}</td>
                 <td class="px-3 py-1.5 font-mono text-xs text-ink-dim">{{ a.deadline ? formatWIB(a.deadline) : "—" }}</td>
                 <td class="px-3 py-1.5 text-right">
                   <div v-if="canApprove" class="flex justify-end gap-1.5">
