@@ -28,8 +28,8 @@ from app.soar import autonomy
 from app.soar.engine import _execute
 from app.soar.notify import notify
 
-# Pangkat approver (pemisahan tugas §7). platform_admin setara Commander (administratif).
-_TIER_RANK = {"analyst_t2": 1, "analyst_t3": 2, "commander": 3, "platform_admin": 3}
+# Pangkat approver (pemisahan tugas §7): hanya Commander yang menyetujui.
+_TIER_RANK = {"commander": 1}
 
 
 def can_approve(role: str, required_tier: str) -> bool:

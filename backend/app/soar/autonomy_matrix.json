@@ -1,23 +1,23 @@
 {
-  "_comment": "Matriks Otonomi Respons (PRD §7). KONFIGURASI, bukan hardcode (§A.5 no.2). Perubahan wajib lewat CAB.",
-  "version": "1.2",
-  "escalation_chain": ["analyst_t2", "analyst_t3", "commander"],
+  "_comment": "Matriks Otonomi Respons (PRD §7). KONFIGURASI, bukan hardcode (§A.5 no.2). Perubahan wajib lewat CAB. Model 4-role: approval terkonsolidasi ke Commander (satu-satunya penyetuju).",
+  "version": "1.3",
+  "escalation_chain": ["commander"],
   "nondisruptive_actions": ["block_ip", "add_watchlist", "collect_forensics", "raise_logging"],
   "cells": {
     "low|K3":      {"mode": "auto"},
     "low|K2":      {"mode": "auto"},
-    "low|K1":      {"mode": "auto", "nondisruptive_only": true, "fallback_tier": "analyst_t3"},
+    "low|K1":      {"mode": "auto", "nondisruptive_only": true, "fallback_tier": "commander"},
 
     "medium|K3":   {"mode": "auto"},
     "medium|K2":   {"mode": "auto", "notify": true},
-    "medium|K1":   {"mode": "approval", "tier": "analyst_t2", "on_timeout": "escalate"},
+    "medium|K1":   {"mode": "approval", "tier": "commander", "on_timeout": "escalate"},
 
     "high|K3":     {"mode": "auto", "notify": true},
-    "high|K2":     {"mode": "approval", "tier": "analyst_t2", "timeout_minutes": 10, "on_timeout": "auto", "notify": true},
-    "high|K1":     {"mode": "approval", "tier": "analyst_t3", "on_timeout": "escalate", "no_auto": true, "notify": true},
+    "high|K2":     {"mode": "approval", "tier": "commander", "timeout_minutes": 10, "on_timeout": "auto", "notify": true},
+    "high|K1":     {"mode": "approval", "tier": "commander", "on_timeout": "escalate", "no_auto": true, "notify": true},
 
     "critical|K3": {"mode": "auto", "notify": true, "notify_commander": true},
-    "critical|K2": {"mode": "approval", "tier": "analyst_t3", "preapproved_auto": true, "notify_commander": true, "notify": true},
+    "critical|K2": {"mode": "approval", "tier": "commander", "preapproved_auto": true, "notify_commander": true, "notify": true},
     "critical|K1": {"mode": "approval", "tier": "commander", "timeout_minutes": 10, "on_timeout": "escalate", "no_auto": true, "notify": true}
   }
 }

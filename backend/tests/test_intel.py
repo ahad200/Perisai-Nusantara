@@ -93,7 +93,7 @@ def _token(client, make_user, username, role):
 
 
 def test_ti_officer_can_seed_and_list(client, make_user):
-    tok = _token(client, make_user, "ti", Role.TI_OFFICER)
+    tok = _token(client, make_user, "ti", Role.INTEL)
     r = client.post("/intel/seed", headers=bearer(tok))
     assert r.status_code == 200, r.text
     assert r.json()["created"] == 5
@@ -102,7 +102,7 @@ def test_ti_officer_can_seed_and_list(client, make_user):
 
 
 def test_ioc_detail_has_enrichment(client, make_user):
-    tok = _token(client, make_user, "ti", Role.TI_OFFICER)
+    tok = _token(client, make_user, "ti", Role.INTEL)
     client.post("/intel/seed", headers=bearer(tok))
     page = client.get("/intel/iocs?q=198.51.100.23", headers=bearer(tok)).json()
     ioc_id = page["items"][0]["id"]
@@ -112,9 +112,9 @@ def test_ioc_detail_has_enrichment(client, make_user):
 
 
 def test_analyst_can_read_but_not_manage(client, make_user):
-    ti = _token(client, make_user, "ti", Role.TI_OFFICER)
+    ti = _token(client, make_user, "ti", Role.INTEL)
     client.post("/intel/seed", headers=bearer(ti))
-    a1 = _token(client, make_user, "a1", Role.ANALYST_T1)
+    a1 = _token(client, make_user, "a1", Role.OPERATOR)
     assert client.get("/intel/iocs", headers=bearer(a1)).status_code == 200
     assert client.post("/intel/seed", headers=bearer(a1)).status_code == 403
     assert client.post("/intel/iocs", headers=bearer(a1),
@@ -122,7 +122,7 @@ def test_analyst_can_read_but_not_manage(client, make_user):
 
 
 def test_status_filter(client, make_user):
-    tok = _token(client, make_user, "ti", Role.TI_OFFICER)
+    tok = _token(client, make_user, "ti", Role.INTEL)
     client.post("/intel/seed", headers=bearer(tok))
     expired = client.get("/intel/iocs?status=expired", headers=bearer(tok)).json()
     assert expired["total"] == 1  # 192.0.2.50

@@ -37,7 +37,7 @@ def test_me_requires_token(client):
 
 
 def test_mfa_setup_enable_and_two_step_login(client, make_user):
-    make_user("analis", Role.ANALYST_T2, "Password123!")
+    make_user("analis", Role.OPERATOR, "Password123!")
     # Login awal tanpa MFA.
     res = login(client, "analis", "Password123!")
     token = res["access_token"]
@@ -70,6 +70,6 @@ def test_mfa_setup_enable_and_two_step_login(client, make_user):
 
 def test_mfa_wrong_otp_rejected(client, make_user):
     secret = pyotp.random_base32()
-    make_user("x", Role.ANALYST_T1, "Password123!", mfa_enabled=True, totp_secret=secret)
+    make_user("x", Role.OPERATOR, "Password123!", mfa_enabled=True, totp_secret=secret)
     res = login(client, "x", "Password123!", otp_code="000000")
     assert res["_status"] == 401

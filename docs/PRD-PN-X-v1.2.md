@@ -94,18 +94,29 @@ Ancaman siber terhadap infrastruktur pertahanan negara terus meningkat, baik jum
 
 ## 3. Persona & Pengguna
 
-| Persona | Kebutuhan Utama | Role RBAC |
-|---|---|---|
-| Cyber Commander (Ketua Tim) | Common operating picture, approval workflow, laporan eksekutif | `commander` |
-| SOC Analyst Tier 1 | Triage alert, eskalasi | `analyst_t1` |
-| SOC Analyst Tier 2–3 | Investigasi, threat hunting, eksekusi playbook | `analyst_t2`, `analyst_t3` |
-| Threat Intel Officer | Manajemen IoC, pemetaan TTP (MITRE ATT&CK), manajemen feed, validasi atribusi | `ti_officer` |
-| Incident Responder | Otomasi containment, forensik, chain-of-custody | `responder` |
-| Red/Purple Team | Simulasi serangan terkendali, uji deteksi, validasi playbook | `purple_team` |
-| Auditor | Audit trail immutable, laporan kepatuhan (read-only) | `auditor` |
-| Administrator Platform | Konfigurasi, integrasi, manajemen pengguna (tidak bisa mengubah audit log) | `platform_admin` |
+Prototipe memakai **model 4-role** — hasil konsolidasi dari sembilan persona awal
+agar lebih ringkas untuk operasi tim kecil, **tanpa melanggar pemisahan tugas**
+(empat pilar: eksekusi ⟂ persetujuan ⟂ validasi atribusi ⟂ audit).
 
-**Prinsip pemisahan tugas:** tidak boleh ada satu role yang sekaligus bisa membuat playbook, menyetujuinya, dan menghapus jejak auditnya.
+| Role RBAC | Persona yang digabung | Kebutuhan Utama / Fitur |
+|---|---|---|
+| `operator` | SOC Analyst Tier 1–3 + Incident Responder + Red/Purple Team | Kerja tangan SOC end-to-end: **simulasi serangan** (uji deteksi) → **deteksi** → **triase alert** → **kelola insiden** → **eksekusi/rollback playbook** (ELANG-4) → jalankan **agen LLM** (ELANG-2/3/6) → susun draf laporan. **Tidak bisa menyetujui** aksinya sendiri. |
+| `commander` | Cyber Commander + Administrator Platform | Supervisi & administrasi: common operating picture, **menyetujui approval SOAR + break-glass**, menyetujui & menjadwalkan laporan, kelola pengguna/aset/aturan. **Tidak mengeksekusi** playbook. Tidak bisa mengubah audit log. |
+| `intel` | Threat Intel Officer | Manajemen IoC, impor STIX, pemetaan TTP (MITRE ATT&CK); **satu-satunya yang boleh memvalidasi hipotesis atribusi** (ELANG-3). |
+| `auditor` | Auditor | Audit trail immutable, verifikasi hash chain, laporan kepatuhan — **read-only**. |
+
+**Prinsip pemisahan tugas:** tidak boleh ada satu role yang sekaligus bisa membuat
+playbook, menyetujuinya, dan menghapus jejak auditnya. Dalam model 4-role ini:
+`operator` **mengeksekusi** tetapi tidak menyetujui; `commander` **menyetujui**
+tetapi tidak mengeksekusi; `intel` **memvalidasi atribusi**; `auditor` **read-only**
+dan — seperti semua role lain, termasuk `commander` — tidak dapat mengubah/menghapus
+audit (tidak ada endpoint mutasi audit sama sekali).
+
+> Catatan versi: persona Tier 1/2/3, responder, purple team, TI officer, dan
+> platform admin tetap valid secara konseptual (SOC nyata memakai eskalasi
+> berjenjang & pemisahan red/blue). Konsolidasi 4-role adalah keputusan
+> implementasi prototipe; approval kini terpusat di `commander` (tier tunggal pada
+> Matriks Otonomi §7).
 
 ---
 
@@ -198,9 +209,9 @@ Setiap agen punya **tingkat otonomi** yang jelas:
 
 ### 6.1 Guardrail per Agen
 - **ELANG-2/3/6**: input berupa log dan artefak diperlakukan sebagai **data tidak tepercaya** (lihat §11). Output harus sesuai skema JSON dan divalidasi sebelum ditampilkan.
-- **ELANG-3**: setiap hipotesis atribusi wajib mencantumkan *confidence* (Rendah/Sedang/Tinggi), bukti pendukung, dan hipotesis alternatif. Label "Tervalidasi" hanya bisa diberikan oleh role `ti_officer`.
+- **ELANG-3**: setiap hipotesis atribusi wajib mencantumkan *confidence* (Rendah/Sedang/Tinggi), bukti pendukung, dan hipotesis alternatif. Label "Tervalidasi" hanya bisa diberikan oleh role `intel`.
 - **ELANG-6**: laporan ke pihak eksternal (stakeholder/regulator) **wajib disetujui manusia** sebelum dikirim.
-- **ELANG-7**: hanya berjalan pada daftar aset yang di-whitelist, dalam jendela waktu terjadwal, dengan teknik yang disetujui. Wajib punya **kill switch** yang bisa dipicu `commander` atau `analyst_t3`. Simulasi destruktif dilarang di produksi.
+- **ELANG-7**: hanya berjalan pada daftar aset yang di-whitelist, dalam jendela waktu terjadwal, dengan teknik yang disetujui. Wajib punya **kill switch** yang bisa dipicu `commander` atau `operator`. Simulasi destruktif dilarang di produksi.
 
 ### 6.2 Fitur Lanjutan
 | Fitur | Deskripsi | Fase |
@@ -228,16 +239,16 @@ Bagian ini menyelesaikan konflik di v1.0. Keputusan "otomatis atau perlu approva
 | Severity ↓ / Aset → | K3 Umum | K2 Penting | K1 Misi-Kritis |
 |---|---|---|---|
 | **Low** | AUTO | AUTO | AUTO (hanya aksi non-disruptif*) |
-| **Medium** | AUTO | AUTO + notifikasi | APPROVAL (T2+) |
-| **High** | AUTO + notifikasi | APPROVAL (T2+), timeout 10 mnt → AUTO | APPROVAL (T3/Commander), **tanpa auto** |
-| **Critical** | AUTO segera + notifikasi Commander | AUTO segera untuk aksi pre-approved**, sisanya APPROVAL | APPROVAL Commander ≤ 10 mnt, eskalasi berjenjang, **tanpa auto** |
+| **Medium** | AUTO | AUTO + notifikasi | APPROVAL (Commander) |
+| **High** | AUTO + notifikasi | APPROVAL (Commander), timeout 10 mnt → AUTO | APPROVAL (Commander), **tanpa auto** |
+| **Critical** | AUTO segera + notifikasi Commander | AUTO segera untuk aksi pre-approved**, sisanya APPROVAL | APPROVAL Commander ≤ 10 mnt, **tanpa auto** |
 
 \* *Aksi non-disruptif*: blokir IoC di perimeter, tambah watchlist, kumpulkan artefak forensik, naikkan level logging.
 \** *Aksi pre-approved*: daftar aksi yang sudah disetujui CAB untuk skenario tertentu (mis. isolasi jaringan endpoint saat terdeteksi enkripsi massal/ransomware).
 
 **Aturan tambahan:**
 1. Setiap aksi otomatis wajib **bisa di-rollback** dan dicatat di audit log.
-2. Perilaku saat approval tidak dijawab sampai timeout: **hanya** sel yang tertulis "timeout → AUTO" (High × K2) yang dieksekusi otomatis. Semua sel APPROVAL lainnya **mengeskalasi** ke approver berikutnya (T2 → T3 → Commander). Untuk K1, sistem tidak pernah mengeksekusi otomatis.
+2. Perilaku saat approval tidak dijawab sampai timeout: **hanya** sel yang tertulis "timeout → AUTO" (High × K2) yang dieksekusi otomatis. Pada model 4-role, approval terkonsolidasi ke **Commander** sebagai tier tunggal (puncak); sel APPROVAL lain yang kehabisan waktu **kedaluwarsa** dan menuntut tindakan manual (tak ada tier eskalasi lanjutan di atas Commander). Untuk K1, sistem tidak pernah mengeksekusi otomatis.
 3. Mode **break-glass**: Commander bisa mengaktifkan mode darurat yang menurunkan ambang approval. Aktivasinya tercatat, dan mode ini otomatis berakhir setelah jangka waktu tertentu.
 4. Matriks ini adalah **konfigurasi**, bukan hardcode, dan perubahannya wajib lewat CAB.
 

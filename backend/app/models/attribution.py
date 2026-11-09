@@ -3,7 +3,7 @@
 Atribusi di PN-X adalah **hipotesis dengan confidence**, bukan vonis (PRD §1 no.6,
 §4.2: atribusi final otomatis tanpa validasi manusia = out of scope). Dihasilkan
 ELANG-3 (Profiler, Sovereign LLM) sebagai usulan; label **Tervalidasi** hanya boleh
-diberikan role `ti_officer` (PRD §6).
+diberikan role `intel` (PRD §6).
 
 Setiap hipotesis wajib mencantumkan: aktor, confidence (Rendah/Sedang/Tinggi),
 bukti pendukung (merujuk ID event/alert — mitigasi halusinasi §11), dan hipotesis
@@ -29,8 +29,8 @@ class Confidence(StrEnum):
 
 class ValidationStatus(StrEnum):
     PROPOSED = "proposed"      # usulan agen, belum ditinjau
-    VALIDATED = "validated"    # dibenarkan ti_officer
-    REJECTED = "rejected"      # ditolak ti_officer
+    VALIDATED = "validated"    # dibenarkan intel
+    REJECTED = "rejected"      # ditolak intel
 
 
 class AttributionHypothesis(Base):

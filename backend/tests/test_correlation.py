@@ -94,9 +94,9 @@ def _seed_and_correlate(client, db_session, tok):
 
 
 def test_responder_runs_correlation_and_manages_case(client, make_user, db_session):
-    a3 = _token(client, make_user, "a3", Role.ANALYST_T3)  # bisa run detection
+    a3 = _token(client, make_user, "a3", Role.OPERATOR)  # bisa run detection
     _seed_and_correlate(client, db_session, a3)
-    resp = _token(client, make_user, "resp", Role.RESPONDER)
+    resp = _token(client, make_user, "resp", Role.OPERATOR)
 
     r = client.post("/incidents/correlate", headers=bearer(resp))
     assert r.status_code == 200, r.text
@@ -128,12 +128,12 @@ def test_responder_runs_correlation_and_manages_case(client, make_user, db_sessi
 
 
 def test_incident_rbac(client, make_user, db_session):
-    a3 = _token(client, make_user, "a3", Role.ANALYST_T3)
+    a3 = _token(client, make_user, "a3", Role.OPERATOR)
     _seed_and_correlate(client, db_session, a3)
     client.post("/incidents/correlate", headers=bearer(a3))
 
     # Analis T1: boleh baca, tak boleh korelasi/kelola.
-    t1 = _token(client, make_user, "t1", Role.ANALYST_T1)
+    t1 = _token(client, make_user, "t1", Role.INTEL)
     assert client.get("/incidents", headers=bearer(t1)).status_code == 200
     assert client.post("/incidents/correlate", headers=bearer(t1)).status_code == 403
     iid = client.get("/incidents", headers=bearer(a3)).json()["items"][0]["id"]

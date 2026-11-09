@@ -9,6 +9,20 @@ lingkungan pengembangan dengan **data simulasi**. Semua integrasi perangkat nyat
 (EDR, firewall) diwakili **mock adapter**. Murni defensif — operasi ofensif/hack-back
 berada **di luar ruang lingkup** (PRD §4.2).
 
+## RBAC — model 4-role (PRD §3)
+Permission-based (`require_permission`), bukan route per-role. Empat role hasil
+konsolidasi dari sembilan persona, menjaga pemisahan tugas (eksekusi ⟂ persetujuan ⟂
+validasi atribusi ⟂ audit):
+- **`operator`** — kerja tangan SOC: `sim:run`, `alert:triage`, `detect:run/manage`,
+  `incident:manage`, `soar:execute`, `agent:run`, `report:generate`. **Tak** menyetujui.
+- **`commander`** — supervisi & admin: `soar:approve/manage`, `report:approve/manage`,
+  `user:*`, `asset:manage`, `audit:read/verify`, `agent:run`. **Tak** `soar:execute`/`sim:run`.
+- **`intel`** — `intel:manage`, `agent:run`, `attribution:validate` (satu-satunya).
+- **`auditor`** — read-only: `audit:read`, `audit:verify`.
+
+Sumber kebenaran: `backend/app/core/rbac.py` (enum `Role` + `ROLE_PERMISSIONS`) &
+`frontend/src/lib/rbac.ts`. Tak ada role yang bisa mengubah audit.
+
 ## Aturan Inti (PRD §A.5) — WAJIB
 1. Agen LLM **tidak boleh** memanggil adapter eksekusi langsung. Hanya `app/soar/` yang boleh.
 2. Semua keputusan auto/approval wajib lewat `app/soar/autonomy.py` yang membaca
@@ -67,7 +81,7 @@ frontend/        Vue 3 (M2)
       layout sidebar/header, halaman Pengguna & Audit terhubung API).
 - [x] **M3** — Aset (K1/K2/K3) + Event, ingest + normalisasi, simulator (baseline ≥14 hari +
       skenario brute force/T1110, beaconing/T1071, ransomware/T1486), halaman inventaris aset
-      & penjelajah event + pemicu simulator (dev, role purple_team/platform_admin).
+      & penjelajah event + pemicu simulator (dev, role operator).
 - [x] **M4** — Threat intel: model `IoC` + siklus hidup (kedaluwarsa/whitelist/false-positive),
       impor STIX 2.1, tabel `EnrichmentRecord` (mirror WHOIS/GeoIP/reputasi lokal, data contoh),
       halaman IoC (impor, detail + enrichment, aksi siklus hidup). Enrichment **hanya** mirror
@@ -82,13 +96,13 @@ frontend/        Vue 3 (M2)
       mesin korelasi alert->insiden per entitas (host/aset) dengan `correlation_key`
       idempotent, agregasi **teknik ATT&CK** + severity tertinggi, siklus respons
       (open/investigating/contained/closed), **linimasa kasus** (catatan + jejak
-      status/penugasan), halaman Insiden + detail. Role responder/T2/T3/commander/admin
+      status/penugasan), halaman Insiden + detail. Role operator/commander
       punya `incident:manage`.
 - [x] **M8** — SOAR: model `Playbook`/`PlaybookRun`/`ActionExecution`/`Approval`/
       `Notification`/`BreakGlass`; **Matriks Otonomi** (§7) dari konfigurasi
       `autonomy_matrix.json` (bukan hardcode); keputusan auto/approval = severity ×
-      kritikalitas; **approval + timeout + eskalasi** (T2→T3→Commander; High×K2
-      timeout→AUTO; K1 tanpa auto); **rollback** (FR-304); **dry-run** (FR-306);
+      kritikalitas; **approval + timeout** (approval terkonsolidasi ke Commander;
+      High×K2 timeout→AUTO; K1 tanpa auto); **rollback** (FR-304); **dry-run** (FR-306);
       adapter **mock** (§A.5 no.8); notifikasi in-app; **break-glass** (§7 no.3);
       halaman SOAR (approval, run, rollback, break-glass) + "jalankan playbook" dari
       detail insiden. Matriks teruji untuk **semua** kombinasi severity×kritikalitas.
@@ -100,7 +114,7 @@ frontend/        Vue 3 (M2)
       chain), **ELANG-6 Reporter** template deterministik (harian/mingguan/bulanan/
       insiden/eksekutif/kepatuhan) dengan **ekspor PDF** (penulis PDF mandiri, tanpa
       dependensi) + **jadwal** (run-due). Laporan lahir `draft`, wajib **disetujui
-      manusia** sebelum kirim eksternal. Role commander/admin: `report:approve`+`manage`.
+      manusia** sebelum kirim eksternal. Role commander: `report:approve`+`manage`.
 - [x] **M10** — (F2) **Agen LLM Sovereign**: `AttributionHypothesis` + agen
       **ELANG-3** (hipotesis atribusi + confidence + bukti ber-ID + alternatif),
       **ELANG-6** (ringkasan insiden), **ELANG-2** (threat hunting). Klien LLM:
@@ -109,7 +123,7 @@ frontend/        Vue 3 (M2)
       deteksi prompt-injection), output **divalidasi skema Pydantic**, klaim
       **grounded** (wajib rujuk ID event/alert; yang mengarang dibuang), agen **tak
       pernah** memanggil adapter (§A.5 no.1), severity final tetap dari rule engine.
-      Label **Tervalidasi** hanya `ti_officer` (`attribution:validate`). Panel
+      Label **Tervalidasi** hanya `intel` (`attribution:validate`). Panel
       "Analisis AI" di detail insiden. Audit aktor=agen.
 
 ## Menjalankan
@@ -131,5 +145,5 @@ python -m app.simulator seed-assets        # tanam armada aset K1/K2/K3
 python -m app.simulator baseline --days 14 # baseline historis bersih
 python -m app.simulator attack all         # bruteforce + beaconing + ransomware
 ```
-Atau dari UI: login sebagai `purple_team` → halaman **Event** → "Jalankan skenario"
+Atau dari UI: login sebagai `operator` → halaman **Event** → "Jalankan skenario"
 (endpoint `POST /dev/simulate`, hanya non-produksi).

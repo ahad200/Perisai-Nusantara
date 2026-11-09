@@ -198,9 +198,9 @@ def test_bad_llm_output_raises(db_session, monkeypatch):
 def test_api_attribution_flow_and_validation(client, make_user, db_session):
     _prepare(db_session)
     inc = _ransom_incident(db_session)
-    make_user("t3", Role.ANALYST_T3)
-    make_user("ti", Role.TI_OFFICER)
-    make_user("resp", Role.RESPONDER)
+    make_user("t3", Role.OPERATOR)
+    make_user("ti", Role.INTEL)
+    make_user("resp", Role.OPERATOR)
 
     t3 = login(client, "t3", "Password123!")["access_token"]
     ti = login(client, "ti", "Password123!")["access_token"]
@@ -224,7 +224,7 @@ def test_api_attribution_flow_and_validation(client, make_user, db_session):
 def test_rbac_analyst_t1_cannot_run_agents(client, make_user, db_session):
     _prepare(db_session)
     inc = _ransom_incident(db_session)
-    make_user("a1", Role.ANALYST_T1)
+    make_user("a1", Role.AUDITOR)
     tok = login(client, "a1", "Password123!")["access_token"]
     # T1 boleh baca atribusi, tak boleh menjalankan agen.
     assert client.get("/agents/attribution", headers=bearer(tok)).status_code == 200

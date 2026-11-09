@@ -79,7 +79,7 @@ def _token(client, make_user, username, role):
 
 
 def test_purple_team_can_trigger_simulation(client, make_user):
-    tok = _token(client, make_user, "purple", Role.PURPLE_TEAM)
+    tok = _token(client, make_user, "purple", Role.OPERATOR)
     r = client.post("/dev/simulate", headers=bearer(tok), json={"scenario": "bruteforce"})
     assert r.status_code == 200, r.text
     body = r.json()
@@ -90,7 +90,8 @@ def test_purple_team_can_trigger_simulation(client, make_user):
     assert ev["total"] > 0
 
 
-def test_analyst_cannot_trigger_simulation(client, make_user):
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+def test_non_operator_cannot_trigger_simulation(client, make_user):
+    # Auditor read-only tak punya sim:run → tak boleh memicu simulasi.
+    tok = _token(client, make_user, "aud", Role.AUDITOR)
     r = client.post("/dev/simulate", headers=bearer(tok), json={"scenario": "bruteforce"})
     assert r.status_code == 403

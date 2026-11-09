@@ -13,11 +13,11 @@ def _token(client, make_user, username, role):
 
 
 def test_platform_admin_can_create_user(client, make_user):
-    tok = _token(client, make_user, "admin", Role.PLATFORM_ADMIN)
+    tok = _token(client, make_user, "admin", Role.COMMANDER)
     r = client.post(
         "/users",
         headers=bearer(tok),
-        json={"username": "baru", "full_name": "User Baru", "role": "analyst_t1", "password": "Password123!"},
+        json={"username": "baru", "full_name": "User Baru", "role": "operator", "password": "Password123!"},
     )
     assert r.status_code == 201
     assert r.json()["username"] == "baru"
@@ -28,13 +28,13 @@ def test_auditor_cannot_create_user(client, make_user):
     r = client.post(
         "/users",
         headers=bearer(tok),
-        json={"username": "baru", "full_name": "x", "role": "analyst_t1", "password": "Password123!"},
+        json={"username": "baru", "full_name": "x", "role": "operator", "password": "Password123!"},
     )
     assert r.status_code == 403
 
 
 def test_analyst_cannot_read_audit(client, make_user):
-    tok = _token(client, make_user, "t1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "t1", Role.OPERATOR)
     assert client.get("/audit", headers=bearer(tok)).status_code == 403
     assert client.get("/audit/verify", headers=bearer(tok)).status_code == 403
 
@@ -48,7 +48,7 @@ def test_auditor_can_read_and_verify_audit(client, make_user):
 
 
 def test_analyst_can_read_users(client, make_user):
-    tok = _token(client, make_user, "t2", Role.ANALYST_T2)
+    tok = _token(client, make_user, "t2", Role.OPERATOR)
     assert client.get("/users", headers=bearer(tok)).status_code == 200
 
 
@@ -69,9 +69,9 @@ def test_auditor_is_read_only():
 
 
 def test_platform_admin_manages_users_but_audit_read_only():
-    assert has_permission(Role.PLATFORM_ADMIN, Permission.USER_MANAGE)
+    assert has_permission(Role.COMMANDER, Permission.USER_MANAGE)
     # Tak punya izin mutasi audit karena izin itu tidak ada untuk siapa pun.
-    assert has_permission(Role.PLATFORM_ADMIN, Permission.AUDIT_READ)
+    assert has_permission(Role.COMMANDER, Permission.AUDIT_READ)
 
 
 @pytest.mark.parametrize("role", list(Role))

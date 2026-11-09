@@ -105,7 +105,7 @@ def _seed_via_api(client, db_session):
 
 def test_analyst_runs_detection_and_triages(client, make_user, db_session):
     _seed_via_api(client, db_session)
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     r = client.post("/detection/run", headers=bearer(tok))
     assert r.status_code == 200, r.text
     assert r.json()["created"] >= 4
@@ -126,7 +126,7 @@ def test_analyst_runs_detection_and_triages(client, make_user, db_session):
 
 def test_auditor_cannot_run_or_triage(client, make_user, db_session):
     _seed_via_api(client, db_session)
-    a1 = _token(client, make_user, "a1", Role.ANALYST_T1)
+    a1 = _token(client, make_user, "a1", Role.OPERATOR)
     client.post("/detection/run", headers=bearer(a1))
     aid = client.get("/alerts", headers=bearer(a1)).json()["items"][0]["id"]
 
@@ -138,7 +138,7 @@ def test_auditor_cannot_run_or_triage(client, make_user, db_session):
 
 def test_alert_detail_has_events(client, make_user, db_session):
     _seed_via_api(client, db_session)
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     client.post("/detection/run", headers=bearer(tok))
     aid = client.get("/alerts?technique=T1110", headers=bearer(tok)).json()["items"][0]["id"]
     d = client.get(f"/alerts/{aid}", headers=bearer(tok)).json()

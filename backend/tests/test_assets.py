@@ -21,7 +21,7 @@ def test_resolve_criticality_failsafe():
 
 
 def test_admin_can_create_and_list_asset(client, make_user):
-    tok = _token(client, make_user, "admin", Role.PLATFORM_ADMIN)
+    tok = _token(client, make_user, "admin", Role.COMMANDER)
     r = client.post("/assets", headers=bearer(tok), json={
         "hostname": "srv-01", "ip": "10.0.0.5", "segment": "inti",
         "owner": "Pusdatin", "criticality": "K1", "tags": ["server"],
@@ -35,7 +35,7 @@ def test_admin_can_create_and_list_asset(client, make_user):
 
 
 def test_create_without_criticality_defaults_k1(client, make_user):
-    tok = _token(client, make_user, "admin", Role.PLATFORM_ADMIN)
+    tok = _token(client, make_user, "admin", Role.COMMANDER)
     r = client.post("/assets", headers=bearer(tok), json={"hostname": "srv-nc"})
     assert r.status_code == 201
     assert r.json()["criticality"] == "K1"  # fail-safe
@@ -48,13 +48,13 @@ def test_auditor_cannot_create_asset(client, make_user):
 
 
 def test_analyst_can_read_but_not_manage(client, make_user):
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     assert client.get("/assets", headers=bearer(tok)).status_code == 200
     assert client.post("/assets", headers=bearer(tok), json={"hostname": "z"}).status_code == 403
 
 
 def test_filter_by_criticality(client, make_user):
-    tok = _token(client, make_user, "admin", Role.PLATFORM_ADMIN)
+    tok = _token(client, make_user, "admin", Role.COMMANDER)
     client.post("/assets", headers=bearer(tok), json={"hostname": "k1a", "criticality": "K1"})
     client.post("/assets", headers=bearer(tok), json={"hostname": "k3a", "criticality": "K3"})
     r = client.get("/assets?criticality=K3", headers=bearer(tok))
@@ -63,7 +63,7 @@ def test_filter_by_criticality(client, make_user):
 
 
 def test_duplicate_hostname_conflict(client, make_user):
-    tok = _token(client, make_user, "admin", Role.PLATFORM_ADMIN)
+    tok = _token(client, make_user, "admin", Role.COMMANDER)
     client.post("/assets", headers=bearer(tok), json={"hostname": "dup"})
     r = client.post("/assets", headers=bearer(tok), json={"hostname": "dup"})
     assert r.status_code == 409

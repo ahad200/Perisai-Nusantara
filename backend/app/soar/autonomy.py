@@ -101,7 +101,7 @@ def decide(
     if cell["mode"] == "auto":
         # Sel AUTO. Carve-out Low×K1: hanya aksi non-disruptif yang auto.
         if cell.get("nondisruptive_only") and disruptive:
-            tier = cell.get("fallback_tier", "analyst_t3")
+            tier = cell.get("fallback_tier", "commander")
             return _approval(tier, f"{base}: aksi disruptif pada aset misi-kritis → approval {tier}.")
         return _auto(f"{base}: eksekusi otomatis sesuai Matriks Otonomi.")
 
@@ -118,5 +118,5 @@ def decide(
         d.notify = True
         return d
 
-    tier = cell.get("tier", "analyst_t2")
+    tier = cell.get("tier", "commander")
     return _approval(tier, f"{base}: perlu approval {tier} sesuai Matriks Otonomi.")

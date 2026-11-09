@@ -166,16 +166,16 @@ def test_api_generate_approve_download(client, make_user, db_session):
     assert p.content.startswith(b"%PDF-1.")
 
 
-def test_rbac_analyst_t1_cannot_generate(client, make_user, db_session):
+def test_rbac_auditor_cannot_generate_operator_can(client, make_user, db_session):
     _prepare(db_session)
-    make_user("a1", Role.ANALYST_T1)
+    make_user("op", Role.OPERATOR)
     make_user("aud", Role.AUDITOR)
-    tok1 = login(client, "a1", "Password123!")["access_token"]
-    # T1 boleh baca tapi tak boleh generate.
-    assert client.get("/reports", headers=bearer(tok1)).status_code == 200
-    assert client.post("/reports", json={"kind": "daily"}, headers=bearer(tok1)).status_code == 403
+    # Operator boleh baca & menghasilkan laporan.
+    tokO = login(client, "op", "Password123!")["access_token"]
+    assert client.get("/reports", headers=bearer(tokO)).status_code == 200
+    assert client.post("/reports", json={"kind": "daily"}, headers=bearer(tokO)).status_code == 201
 
-    # Auditor read-only: boleh baca, tak boleh generate/approve.
+    # Auditor read-only: boleh baca, tak boleh generate.
     tokA = login(client, "aud", "Password123!")["access_token"]
     assert client.get("/reports", headers=bearer(tokA)).status_code == 200
     assert client.post("/reports", json={"kind": "compliance"}, headers=bearer(tokA)).status_code == 403
@@ -183,7 +183,7 @@ def test_rbac_analyst_t1_cannot_generate(client, make_user, db_session):
 
 def test_rbac_only_approver_can_approve(client, make_user, db_session):
     _prepare(db_session)
-    make_user("resp", Role.RESPONDER)
+    make_user("resp", Role.OPERATOR)
     tok = login(client, "resp", "Password123!")["access_token"]
     # Responder boleh generate (laporan insiden) tapi tak boleh approve.
     g = client.post("/reports", json={"kind": "daily"}, headers=bearer(tok))

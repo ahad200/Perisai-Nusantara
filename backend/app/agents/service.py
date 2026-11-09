@@ -165,7 +165,7 @@ def run_attribution(db: Session, *, incident_id: int, actor: str = "ELANG-3") ->
 def validate_hypothesis(
     db: Session, *, hypothesis_id: int, validator: str, status: str, note: str = ""
 ) -> AttributionHypothesis:
-    """Label Tervalidasi/Ditolak — hanya role ti_officer (ditegakkan di API)."""
+    """Label Tervalidasi/Ditolak — hanya role intel (ditegakkan di API)."""
     hyp = db.get(AttributionHypothesis, hypothesis_id)
     if hyp is None:
         raise ValueError(f"hipotesis {hypothesis_id} tak ditemukan")

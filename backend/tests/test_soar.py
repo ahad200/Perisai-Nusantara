@@ -64,7 +64,7 @@ def test_ransomware_k3_auto_isolate(db_session):
     seed_playbooks(db_session)
     reset_log()
     inc = _incident(db_session, severity="critical", crit=Criticality.K3, technique="T1486", host="ws-k3")
-    run = run_playbook(db_session, incident_id=inc.id, actor="responder")
+    run = run_playbook(db_session, incident_id=inc.id, actor="operator")
     assert run.status == RunStatus.COMPLETED.value
     acts = _actions(db_session, run.id)
     isolate = next(a for a in acts if a.action == "isolate_host")
@@ -77,7 +77,7 @@ def test_ransomware_k3_auto_isolate(db_session):
 def test_ransomware_k1_awaits_commander(db_session):
     seed_playbooks(db_session)
     inc = _incident(db_session, severity="critical", crit=Criticality.K1, technique="T1486", host="dc-k1")
-    run = run_playbook(db_session, incident_id=inc.id, actor="responder")
+    run = run_playbook(db_session, incident_id=inc.id, actor="operator")
     assert run.status == RunStatus.AWAITING_APPROVAL.value
     isolate = next(a for a in _actions(db_session, run.id) if a.action == "isolate_host")
     assert isolate.status == ActionStatus.AWAITING_APPROVAL.value
@@ -90,8 +90,8 @@ def test_rollback_reverses_executed_actions(db_session):
     seed_playbooks(db_session)
     reset_log()
     inc = _incident(db_session, severity="critical", crit=Criticality.K3, technique="T1486", host="ws-rb")
-    run = run_playbook(db_session, incident_id=inc.id, actor="responder")
-    res = rollback_run(db_session, run_id=run.id, actor="responder")
+    run = run_playbook(db_session, incident_id=inc.id, actor="operator")
+    res = rollback_run(db_session, run_id=run.id, actor="operator")
     assert res["rolled_back"] >= 1
     isolate = next(a for a in _actions(db_session, run.id) if a.action == "isolate_host")
     assert isolate.rolled_back is True and isolate.status == ActionStatus.ROLLED_BACK.value
@@ -105,7 +105,7 @@ def test_dry_run_has_no_effect(db_session):
     seed_playbooks(db_session)
     reset_log()
     inc = _incident(db_session, severity="critical", crit=Criticality.K1, technique="T1486", host="dc-dry")
-    run = run_playbook(db_session, incident_id=inc.id, mode=RunMode.DRY_RUN.value, actor="responder")
+    run = run_playbook(db_session, incident_id=inc.id, mode=RunMode.DRY_RUN.value, actor="operator")
     assert run.status == RunStatus.COMPLETED.value
     assert all(a.status == ActionStatus.SIMULATED.value for a in _actions(db_session, run.id))
     # Tidak ada efek: adapter tak dipanggil, tak ada approval.
@@ -118,7 +118,7 @@ def test_dry_run_has_no_effect(db_session):
 def test_high_k2_timeout_executes_auto(db_session):
     seed_playbooks(db_session)
     inc = _incident(db_session, severity="high", crit=Criticality.K2, technique="T1110", host="app-k2")
-    run = run_playbook(db_session, incident_id=inc.id, actor="responder")
+    run = run_playbook(db_session, incident_id=inc.id, actor="operator")
     assert run.status == RunStatus.AWAITING_APPROVAL.value
     future = datetime.now(timezone.utc) + timedelta(minutes=20)
     res = process_timeouts(db_session, now=future, actor="system")
@@ -128,22 +128,26 @@ def test_high_k2_timeout_executes_auto(db_session):
     assert all(a.status == ActionStatus.EXECUTED.value for a in _actions(db_session, run.id))
 
 
-def test_approval_escalates_to_next_tier(db_session):
+def test_approval_expires_at_top_tier(db_session):
+    """Model 4-role: approval terkonsolidasi ke Commander (tier puncak). Timeout
+    pada tier puncak tanpa jawaban → KEDALUWARSA (bukan eskalasi), butuh tindakan
+    manual. K1 tak pernah auto."""
     seed_playbooks(db_session)
-    # medium × K1 → approval tier analyst_t2, on_timeout escalate.
+    # medium × K1 → approval tier commander, on_timeout escalate.
     inc = _incident(db_session, severity="medium", crit=Criticality.K1, technique="T1036", host="dc-esc")
-    run = run_playbook(db_session, incident_id=inc.id, actor="responder")
+    run = run_playbook(db_session, incident_id=inc.id, actor="operator")
     ap = db_session.execute(
         select(Approval).where(Approval.status == ApprovalStatus.PENDING.value)
     ).scalars().first()
-    assert ap.required_tier == "analyst_t2"
-    # Beri deadline lampau untuk memicu eskalasi.
+    assert ap.required_tier == "commander"
+    # Beri deadline lampau untuk memicu pemrosesan timeout.
     ap.deadline = datetime.now(timezone.utc) - timedelta(minutes=1)
     db_session.commit()
     res = process_timeouts(db_session, actor="system")
-    assert res["escalated"] == 1
+    # Commander adalah puncak → tak ada eskalasi lanjutan → kedaluwarsa.
+    assert res["escalated"] == 0 and res["expired"] == 1
     db_session.refresh(ap)
-    assert ap.required_tier == "analyst_t3" and ap.status == ApprovalStatus.PENDING.value
+    assert ap.required_tier == "commander" and ap.status == ApprovalStatus.EXPIRED.value
 
 
 # --- API + RBAC ---
@@ -157,17 +161,17 @@ def test_responder_runs_and_commander_approves(client, make_user, db_session):
     seed_playbooks(db_session)
     inc = _incident(db_session, severity="critical", crit=Criticality.K1, technique="T1486", host="dc-api")
 
-    resp = _token(client, make_user, "resp", Role.RESPONDER)
+    resp = _token(client, make_user, "resp", Role.OPERATOR)
     r = client.post("/soar/run", headers=bearer(resp), json={"incident_id": inc.id})
     assert r.status_code == 200, r.text
     run = r.json()
     assert run["status"] == "awaiting_approval"
     ap_id = next(a["approval_id"] for a in run["actions"] if a["action"] == "isolate_host")
 
-    # T2 tak boleh menyetujui approval tier commander.
-    t2 = _token(client, make_user, "t2", Role.ANALYST_T2)
-    low = client.post(f"/soar/approvals/{ap_id}/resolve", headers=bearer(t2), json={"decision": "approve"})
-    assert low.status_code == 403
+    # Operator tak boleh menyetujui (hanya Commander yang punya soar:approve).
+    t2 = _token(client, make_user, "t2", Role.OPERATOR)
+    deny = client.post(f"/soar/approvals/{ap_id}/resolve", headers=bearer(t2), json={"decision": "approve"})
+    assert deny.status_code == 403
 
     # Commander menyetujui → aksi dieksekusi.
     cmd = _token(client, make_user, "cmd", Role.COMMANDER)
@@ -181,8 +185,8 @@ def test_responder_runs_and_commander_approves(client, make_user, db_session):
 def test_soar_rbac(client, make_user, db_session):
     seed_playbooks(db_session)
     inc = _incident(db_session, severity="low", crit=Criticality.K3, technique="T1486", host="ws-rbac")
-    # Analis T1 tak boleh menjalankan playbook.
-    t1 = _token(client, make_user, "t1b", Role.ANALYST_T1)
+    # Intel tak boleh menjalankan playbook (tak punya soar:execute).
+    t1 = _token(client, make_user, "t1b", Role.INTEL)
     assert client.post("/soar/run", headers=bearer(t1), json={"incident_id": inc.id}).status_code == 403
     # Tapi boleh melihat playbook (soar:read).
     assert client.get("/soar/playbooks", headers=bearer(t1)).status_code == 200
@@ -199,7 +203,7 @@ def test_break_glass_auto_executes_non_k1(client, make_user, db_session):
     # Aktifkan break-glass (commander, soar:manage).
     bg = client.post("/soar/break-glass", headers=bearer(cmd), json={"reason": "latihan", "minutes": 30})
     assert bg.status_code == 200
-    resp = _token(client, make_user, "resp2", Role.RESPONDER)
+    resp = _token(client, make_user, "resp2", Role.OPERATOR)
     run = client.post("/soar/run", headers=bearer(resp), json={"incident_id": inc_k2.id}).json()
     # Break-glass → high×K2 (biasanya approval) jadi auto.
     assert run["status"] == "completed"

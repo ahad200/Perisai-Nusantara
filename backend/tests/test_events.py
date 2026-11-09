@@ -29,7 +29,7 @@ def _token(client, make_user, username, role):
 
 def test_list_events_and_total(client, make_user, db_session):
     _seed_events(db_session)
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     r = client.get("/events", headers=bearer(tok))
     assert r.status_code == 200, r.text
     body = r.json()
@@ -41,7 +41,7 @@ def test_list_events_and_total(client, make_user, db_session):
 
 def test_filter_by_source_type(client, make_user, db_session):
     _seed_events(db_session)
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     r = client.get("/events?source_type=auth", headers=bearer(tok))
     body = r.json()
     assert body["total"] == 2
@@ -50,7 +50,7 @@ def test_filter_by_source_type(client, make_user, db_session):
 
 def test_filter_by_scenario_and_search(client, make_user, db_session):
     _seed_events(db_session)
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     assert client.get("/events?scenario=unittest", headers=bearer(tok)).json()["total"] == 3
     r = client.get("/events?q=203.0.113.1", headers=bearer(tok))
     assert r.json()["total"] == 1
@@ -58,7 +58,7 @@ def test_filter_by_scenario_and_search(client, make_user, db_session):
 
 def test_event_has_asset_criticality(client, make_user, db_session):
     _seed_events(db_session)
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     r = client.get("/events?host=cmd-core-01", headers=bearer(tok))
     item = r.json()["items"][0]
     assert item["asset_criticality"] == "K1"
@@ -66,7 +66,7 @@ def test_event_has_asset_criticality(client, make_user, db_session):
 
 def test_pagination(client, make_user, db_session):
     _seed_events(db_session)
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     r = client.get("/events?limit=2&offset=0", headers=bearer(tok))
     body = r.json()
     assert body["total"] == 3 and len(body["items"]) == 2
@@ -74,7 +74,7 @@ def test_pagination(client, make_user, db_session):
 
 def test_event_detail_includes_raw(client, make_user, db_session):
     _seed_events(db_session)
-    tok = _token(client, make_user, "a1", Role.ANALYST_T1)
+    tok = _token(client, make_user, "a1", Role.OPERATOR)
     first_id = client.get("/events", headers=bearer(tok)).json()["items"][0]["id"]
     r = client.get(f"/events/{first_id}", headers=bearer(tok))
     assert r.status_code == 200

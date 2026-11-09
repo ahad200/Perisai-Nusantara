@@ -84,7 +84,7 @@ def test_run_detection_creates_ml_alert(db_session):
 
 def test_ml_alert_detail_exposes_score_and_features(client, make_user, db_session):
     _prepare(db_session)
-    make_user("a1", Role.ANALYST_T1)
+    make_user("a1", Role.OPERATOR)
     tok = login(client, "a1", "Password123!")["access_token"]
 
     client.post("/detection/run", headers=bearer(tok))

@@ -11,20 +11,20 @@ from app.soar.autonomy import decide, next_approver
 EXPECTED_DISRUPTIVE = {
     ("low", "K3"): ("auto", None, None, None),
     ("low", "K2"): ("auto", None, None, None),
-    ("low", "K1"): ("approval", "analyst_t3", None, "escalate"),   # disruptif pada K1
+    ("low", "K1"): ("approval", "commander", None, "escalate"),   # disruptif pada K1
     ("medium", "K3"): ("auto", None, None, None),
     ("medium", "K2"): ("auto", None, None, None),
-    ("medium", "K1"): ("approval", "analyst_t2", False, "escalate"),
+    ("medium", "K1"): ("approval", "commander", False, "escalate"),
     ("high", "K3"): ("auto", None, None, None),
-    ("high", "K2"): ("approval", "analyst_t2", False, "auto"),      # timeout → AUTO
-    ("high", "K1"): ("approval", "analyst_t3", True, "escalate"),   # tanpa auto
+    ("high", "K2"): ("approval", "commander", False, "auto"),      # timeout → AUTO
+    ("high", "K1"): ("approval", "commander", True, "escalate"),   # tanpa auto
     ("critical", "K3"): ("auto", None, None, None),
-    ("critical", "K2"): ("approval", "analyst_t3", False, "escalate"),
+    ("critical", "K2"): ("approval", "commander", False, "escalate"),
     ("critical", "K1"): ("approval", "commander", True, "escalate"),  # tanpa auto
     # info diperlakukan seperti low.
     ("info", "K3"): ("auto", None, None, None),
     ("info", "K2"): ("auto", None, None, None),
-    ("info", "K1"): ("approval", "analyst_t3", None, "escalate"),
+    ("info", "K1"): ("approval", "commander", None, "escalate"),
 }
 
 
@@ -90,9 +90,10 @@ def test_break_glass_keeps_k1_approval():
     assert d.mode == "approval" and d.required_tier == "commander"
 
 
-# --- Rantai eskalasi ---
+# --- Rantai eskalasi (model 4-role: approval terkonsolidasi ke Commander) ---
 
 def test_escalation_chain():
-    assert next_approver("analyst_t2") == "analyst_t3"
-    assert next_approver("analyst_t3") == "commander"
+    # Commander adalah penyetuju puncak (satu-satunya tier) → tak ada eskalasi lanjutan.
     assert next_approver("commander") is None
+    # Role non-penyetuju tak ada di rantai.
+    assert next_approver("operator") is None

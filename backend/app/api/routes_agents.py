@@ -1,7 +1,7 @@
 """Router agen LLM (M10, PRD §6/§11): ELANG-2/3/6 + hipotesis atribusi.
 
 Agen hanya MENGUSULKAN (§A.5 no.1). Output sudah divalidasi skema + grounding di
-service. Label 'Tervalidasi' hanya role ti_officer (ATTRIBUTION_VALIDATE).
+service. Label 'Tervalidasi' hanya role intel (ATTRIBUTION_VALIDATE).
 """
 from __future__ import annotations
 

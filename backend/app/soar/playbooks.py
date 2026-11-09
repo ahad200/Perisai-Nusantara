@@ -21,7 +21,7 @@ DEFAULT_PLAYBOOKS: list[dict] = [
         "code": "PNX-PB-RANSOM",
         "name": "Containment Ransomware (T1486)",
         "trigger_technique": "T1486",
-        "owner": "ti_officer",
+        "owner": "intel",
         "description": "Isolasi host terenkripsi, kumpulkan forensik, blokir indikator.",
         "steps": [
             {"action": "isolate_host", "params": {}, "disruptive": True, "pre_approved": True},
@@ -33,7 +33,7 @@ DEFAULT_PLAYBOOKS: list[dict] = [
         "code": "PNX-PB-BRUTEFORCE",
         "name": "Respons Brute Force (T1110)",
         "trigger_technique": "T1110",
-        "owner": "analyst_t3",
+        "owner": "operator",
         "description": "Blokir sumber, cabut sesi akun target, naikkan logging.",
         "steps": [
             {"action": "block_ip", "params": {}, "disruptive": False, "pre_approved": False},
@@ -45,7 +45,7 @@ DEFAULT_PLAYBOOKS: list[dict] = [
         "code": "PNX-PB-BEACON",
         "name": "Respons Beaconing C2 (T1071)",
         "trigger_technique": "T1071",
-        "owner": "analyst_t3",
+        "owner": "operator",
         "description": "Blokir C2 di perimeter, tambahkan ke watchlist, kumpulkan artefak.",
         "steps": [
             {"action": "block_ip", "params": {}, "disruptive": False, "pre_approved": False},
@@ -57,7 +57,7 @@ DEFAULT_PLAYBOOKS: list[dict] = [
         "code": "PNX-PB-SUSPROC",
         "name": "Respons Proses Mencurigakan (T1036)",
         "trigger_technique": "T1036",
-        "owner": "analyst_t3",
+        "owner": "operator",
         "description": "Isolasi host, kumpulkan forensik.",
         "steps": [
             {"action": "isolate_host", "params": {}, "disruptive": True, "pre_approved": False},

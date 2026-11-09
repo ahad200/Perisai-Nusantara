@@ -61,7 +61,7 @@ def _execute(db: Session, ae: ActionExecution, *, actor: str) -> None:
 
 def run_playbook(
     db: Session, *, incident_id: int, playbook_code: str | None = None,
-    mode: str = RunMode.AUTO.value, actor: str = "responder", record_audit: bool = True,
+    mode: str = RunMode.AUTO.value, actor: str = "operator", record_audit: bool = True,
 ) -> PlaybookRun:
     """Jalankan playbook untuk insiden. Kembalikan PlaybookRun (dengan ActionExecution)."""
     incident = db.get(Incident, incident_id)

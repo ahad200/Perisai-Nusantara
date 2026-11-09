@@ -69,7 +69,7 @@ def test_mttr_computed_when_incident_closed(db_session):
 
 
 def test_situasi_endpoint_rbac(client, make_user):
-    make_user("analyst1", Role.ANALYST_T1)
+    make_user("analyst1", Role.OPERATOR)
     tok = login(client, "analyst1", "Password123!")["access_token"]
     # Semua role SOC boleh membaca dashboard.
     r = client.get("/dashboard/situasi", headers=bearer(tok))
