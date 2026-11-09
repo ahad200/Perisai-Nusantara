@@ -53,6 +53,9 @@ class Permission(StrEnum):
     REPORT_GENERATE = "report:generate"  # hasilkan laporan (ELANG-6 template)
     REPORT_APPROVE = "report:approve"    # setujui laporan sebelum kirim eksternal
     REPORT_MANAGE = "report:manage"      # kelola jadwal laporan
+    AGENT_RUN = "agent:run"              # jalankan agen LLM (ELANG-2/3/6) — mengusulkan
+    ATTRIBUTION_READ = "attribution:read"      # lihat hipotesis atribusi
+    ATTRIBUTION_VALIDATE = "attribution:validate"  # label Tervalidasi (hanya ti_officer)
 
 
 # Izin yang dimiliki **semua** role SOC: melihat inventaris aset, event, & intel.
@@ -68,6 +71,8 @@ _SOC_BASE = frozenset(
         # Semua role SOC boleh melihat dashboard Situasi/Eksekutif/Coverage & laporan.
         Permission.DASHBOARD_READ,
         Permission.REPORT_READ,
+        # Semua role SOC boleh melihat hipotesis atribusi (read-only).
+        Permission.ATTRIBUTION_READ,
     }
 )
 
@@ -90,6 +95,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.REPORT_GENERATE,
         Permission.REPORT_APPROVE,
         Permission.REPORT_MANAGE,
+        Permission.AGENT_RUN,
     },
     Role.PLATFORM_ADMIN: _SOC_BASE
     | {
@@ -110,6 +116,8 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.REPORT_GENERATE,
         Permission.REPORT_APPROVE,
         Permission.REPORT_MANAGE,
+        Permission.AGENT_RUN,
+        Permission.ATTRIBUTION_VALIDATE,
     },
     # Auditor tetap read-only (pemisahan tugas): boleh membaca, tak boleh mengubah.
     Role.AUDITOR: _SOC_BASE | {Permission.AUDIT_READ, Permission.AUDIT_VERIFY},
@@ -117,7 +125,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
     # T2/T3 mengelola insiden (korelasi alert -> kasus, siklus respons).
     Role.ANALYST_T2: _SOC_BASE
     | _ANALYST_TRIAGE
-    | {Permission.INCIDENT_MANAGE, Permission.SOAR_APPROVE, Permission.REPORT_GENERATE},
+    | {Permission.INCIDENT_MANAGE, Permission.SOAR_APPROVE, Permission.REPORT_GENERATE, Permission.AGENT_RUN},
     Role.ANALYST_T3: _SOC_BASE
     | _ANALYST_TRIAGE
     | {
@@ -126,12 +134,14 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.SOAR_EXECUTE,
         Permission.SOAR_APPROVE,
         Permission.REPORT_GENERATE,
+        Permission.AGENT_RUN,
     },
-    # Threat Intel Officer: kelola IoC, impor STIX, siklus hidup (PRD §3).
-    Role.TI_OFFICER: _SOC_BASE | {Permission.INTEL_MANAGE},
+    # Threat Intel Officer: kelola IoC, impor STIX; validasi atribusi (§6 ELANG-3).
+    Role.TI_OFFICER: _SOC_BASE
+    | {Permission.INTEL_MANAGE, Permission.AGENT_RUN, Permission.ATTRIBUTION_VALIDATE},
     # Responder (ELANG-4): satu-satunya agen yang mengeksekusi playbook (§6).
     Role.RESPONDER: _SOC_BASE
-    | {Permission.INCIDENT_MANAGE, Permission.SOAR_EXECUTE, Permission.REPORT_GENERATE},
+    | {Permission.INCIDENT_MANAGE, Permission.SOAR_EXECUTE, Permission.REPORT_GENERATE, Permission.AGENT_RUN},
     # Purple team menjalankan simulasi serangan (data simulasi).
     Role.PURPLE_TEAM: _SOC_BASE | {Permission.SIM_RUN, Permission.DETECT_RUN},
 }

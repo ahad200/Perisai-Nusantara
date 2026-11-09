@@ -46,7 +46,9 @@ backend/app/
   reports/     metrik Situasi/Eksekutif + coverage ATT&CK (teknik prioritas) +
                ELANG-6 Reporter (template deterministik) + penulis PDF tanpa
                dependensi + jadwal laporan (M9)
-  agents/      (milestone berikutnya — M10, F2)
+  agents/      ELANG-2/3/6 (Sovereign LLM): sandbox prompt (data tak tepercaya +
+               deteksi injection) + grounding klaim (rujuk ID) + validasi skema +
+               klien LLM (stub offline default / Ollama loopback-only) (M10, F2)
 backend/tests/   pytest
 frontend/        Vue 3 (M2)
 ```
@@ -99,7 +101,16 @@ frontend/        Vue 3 (M2)
       insiden/eksekutif/kepatuhan) dengan **ekspor PDF** (penulis PDF mandiri, tanpa
       dependensi) + **jadwal** (run-due). Laporan lahir `draft`, wajib **disetujui
       manusia** sebelum kirim eksternal. Role commander/admin: `report:approve`+`manage`.
-- [ ] M10 — (F2) Agen LLM (Ollama) + AttributionHypothesis.
+- [x] **M10** — (F2) **Agen LLM Sovereign**: `AttributionHypothesis` + agen
+      **ELANG-3** (hipotesis atribusi + confidence + bukti ber-ID + alternatif),
+      **ELANG-6** (ringkasan insiden), **ELANG-2** (threat hunting). Klien LLM:
+      **stub deterministik offline** default; **Ollama loopback-only** (egress guard,
+      FR-404). Kontrol §11 ditegakkan: data lapangan **tak tepercaya** (dibungkus +
+      deteksi prompt-injection), output **divalidasi skema Pydantic**, klaim
+      **grounded** (wajib rujuk ID event/alert; yang mengarang dibuang), agen **tak
+      pernah** memanggil adapter (§A.5 no.1), severity final tetap dari rule engine.
+      Label **Tervalidasi** hanya `ti_officer` (`attribution:validate`). Panel
+      "Analisis AI" di detail insiden. Audit aktor=agen.
 
 ## Menjalankan
 ```bash

@@ -44,7 +44,32 @@ const auth = useAuthStore();
 const canManage = computed(() => auth.can("incident:manage"));
 const canExecute = computed(() => auth.can("soar:execute"));
 const canReport = computed(() => auth.can("report:generate"));
+const canRunAgent = computed(() => auth.can("agent:run"));
+const canValidate = computed(() => auth.can("attribution:validate"));
 const runMsg = ref<string | null>(null);
+
+interface Claim { text: string; refs: string[]; grounded?: boolean }
+interface Attribution {
+  id: number; incident_id: number; actor: string; confidence: string;
+  evidence: Claim[]; alternatives: string[]; rationale: string;
+  injection_flags: string[]; status: string; created_by: string;
+  model_name: string; validator: string | null; validator_note: string;
+}
+interface AiSummary { summary: string; key_findings: Claim[]; recommended_next_steps: string[]; confidence: string; model: string; injection_flags: string[]; draft: boolean }
+interface AiHunt { hypothesis: string; queries: { description: string; filter: string; refs: string[] }[]; confidence: string; draft: boolean }
+
+const attributions = ref<Attribution[]>([]);
+const aiSummary = ref<AiSummary | null>(null);
+const aiHunt = ref<AiHunt | null>(null);
+const aiBusy = ref(false);
+
+const CONF_TONE: Record<string, "ok" | "warn" | "danger" | "muted"> = {
+  high: "danger", medium: "warn", low: "muted",
+};
+const CONF_LABEL: Record<string, string> = { high: "Tinggi", medium: "Sedang", low: "Rendah" };
+const VSTATUS_TONE: Record<string, "ok" | "warn" | "danger" | "muted"> = {
+  validated: "ok", rejected: "danger", proposed: "muted",
+};
 
 const items = ref<Incident[]>([]);
 const total = ref(0);
@@ -112,13 +137,75 @@ async function openDetail(id: number) {
   detailOpen.value = true;
   detail.value = null;
   runMsg.value = null;
+  aiSummary.value = null;
+  aiHunt.value = null;
+  attributions.value = [];
   detail.value = await apiFetch<IncidentDetail>(`/incidents/${id}`);
   statusDraft.value = detail.value.status;
+  loadAttributions(id);
 }
 
 async function refreshDetail() {
   if (detail.value) detail.value = await apiFetch<IncidentDetail>(`/incidents/${detail.value.id}`);
   await load();
+}
+
+// --- Agen LLM (M10): ELANG-2/3/6. Semua output = DRAF, perlu tinjauan manusia. ---
+async function loadAttributions(id: number) {
+  try {
+    attributions.value = await apiFetch<Attribution[]>(`/agents/attribution?incident_id=${id}`);
+  } catch {
+    attributions.value = [];
+  }
+}
+
+async function runAttribution() {
+  if (!detail.value) return;
+  aiBusy.value = true; runMsg.value = null;
+  try {
+    await apiFetch(`/agents/incidents/${detail.value.id}/attribution`, { method: "POST" });
+    await loadAttributions(detail.value.id);
+  } catch (e) {
+    runMsg.value = e instanceof ApiError ? e.message : "Gagal menjalankan ELANG-3";
+  } finally {
+    aiBusy.value = false;
+  }
+}
+
+async function runSummary() {
+  if (!detail.value) return;
+  aiBusy.value = true; runMsg.value = null;
+  try {
+    aiSummary.value = await apiFetch<AiSummary>(`/agents/incidents/${detail.value.id}/summary`, { method: "POST" });
+  } catch (e) {
+    runMsg.value = e instanceof ApiError ? e.message : "Gagal menjalankan ELANG-6";
+  } finally {
+    aiBusy.value = false;
+  }
+}
+
+async function runHunt() {
+  if (!detail.value) return;
+  aiBusy.value = true; runMsg.value = null;
+  try {
+    aiHunt.value = await apiFetch<AiHunt>(`/agents/incidents/${detail.value.id}/hunt`, { method: "POST" });
+  } catch (e) {
+    runMsg.value = e instanceof ApiError ? e.message : "Gagal menjalankan ELANG-2";
+  } finally {
+    aiBusy.value = false;
+  }
+}
+
+async function validateHyp(h: Attribution, decision: "validated" | "rejected") {
+  aiBusy.value = true; runMsg.value = null;
+  try {
+    await apiFetch(`/agents/attribution/${h.id}/validate`, { method: "POST", body: { status: decision } });
+    if (detail.value) await loadAttributions(detail.value.id);
+  } catch (e) {
+    runMsg.value = e instanceof ApiError ? e.message : "Gagal memvalidasi";
+  } finally {
+    aiBusy.value = false;
+  }
 }
 
 async function assign() {
@@ -311,6 +398,77 @@ watch([severity, status, activeOnly], load);
               </div>
             </li>
           </ul>
+        </div>
+
+        <!-- Analisis AI (M10): ELANG-2/3/6. Draf, wajib tinjauan manusia (§11). -->
+        <div class="space-y-2 rounded border border-edge bg-graphite-base p-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-medium text-ink">Analisis AI <span class="font-normal text-ink-dim">· Sovereign LLM (lokal), output draf</span></span>
+            <div v-if="canRunAgent" class="flex gap-1.5">
+              <AppButton size="sm" variant="default" :loading="aiBusy" @click="runAttribution">Atribusi (ELANG-3)</AppButton>
+              <AppButton size="sm" variant="ghost" :loading="aiBusy" @click="runSummary">Ringkasan (ELANG-6)</AppButton>
+              <AppButton size="sm" variant="ghost" :loading="aiBusy" @click="runHunt">Hunt (ELANG-2)</AppButton>
+            </div>
+          </div>
+
+          <!-- Hipotesis atribusi -->
+          <div v-if="attributions.length" class="space-y-2">
+            <div
+              v-for="h in attributions"
+              :key="h.id"
+              class="rounded border border-edge bg-graphite-surface p-2"
+            >
+              <div class="flex flex-wrap items-center gap-2">
+                <StatusBadge :tone="CONF_TONE[h.confidence] || 'muted'">Confidence: {{ CONF_LABEL[h.confidence] || h.confidence }}</StatusBadge>
+                <StatusBadge :tone="VSTATUS_TONE[h.status] || 'muted'">{{ h.status === 'validated' ? 'Tervalidasi' : h.status === 'rejected' ? 'Ditolak' : 'Usulan' }}</StatusBadge>
+                <span class="font-mono text-[10px] text-ink-dim">{{ h.created_by }} · {{ h.model_name }}</span>
+              </div>
+              <div class="mt-1 text-sm text-ink">{{ h.actor }}</div>
+              <div v-if="h.evidence.length" class="mt-1 space-y-0.5">
+                <div v-for="(e, i) in h.evidence" :key="i" class="text-xs text-ink-muted">
+                  • {{ e.text }}
+                  <span v-for="r in e.refs" :key="r" class="ml-1 rounded-sm border border-edge px-1 font-mono text-[10px] text-ink-dim">{{ r }}</span>
+                  <span v-if="e.grounded === false" class="ml-1 text-sev-medium">tak terverifikasi</span>
+                </div>
+              </div>
+              <div v-if="h.alternatives.length" class="mt-1 text-xs text-ink-dim">
+                Alternatif: {{ h.alternatives.join(" · ") }}
+              </div>
+              <div v-if="h.injection_flags.length" class="mt-1 text-xs text-sev-medium">
+                ⚠ Indikator prompt-injection pada data: {{ h.injection_flags.length }} (diabaikan oleh model)
+              </div>
+              <div v-if="canValidate && h.status === 'proposed'" class="mt-1.5 flex gap-1.5">
+                <AppButton size="sm" variant="primary" :loading="aiBusy" @click="validateHyp(h, 'validated')">Validasi</AppButton>
+                <AppButton size="sm" variant="ghost" :loading="aiBusy" @click="validateHyp(h, 'rejected')">Tolak</AppButton>
+              </div>
+              <div v-else-if="h.validator" class="mt-1 font-mono text-[10px] text-ink-dim">
+                oleh {{ h.validator }}<span v-if="h.validator_note"> — {{ h.validator_note }}</span>
+              </div>
+            </div>
+          </div>
+          <p v-else class="text-xs text-ink-dim">Belum ada hipotesis atribusi. Atribusi adalah hipotesis + confidence, wajib divalidasi TI Officer.</p>
+
+          <!-- Ringkasan ELANG-6 -->
+          <div v-if="aiSummary" class="rounded border border-edge bg-graphite-surface p-2 text-xs">
+            <div class="mb-1 flex items-center gap-2">
+              <span class="font-medium text-ink">Ringkasan (draf AI)</span>
+              <StatusBadge :tone="CONF_TONE[aiSummary.confidence] || 'muted'">{{ CONF_LABEL[aiSummary.confidence] }}</StatusBadge>
+            </div>
+            <p class="text-ink-muted">{{ aiSummary.summary }}</p>
+            <ul v-if="aiSummary.recommended_next_steps.length" class="mt-1 list-disc pl-4 text-ink-muted">
+              <li v-for="(s, i) in aiSummary.recommended_next_steps" :key="i">{{ s }}</li>
+            </ul>
+          </div>
+
+          <!-- Hunt ELANG-2 -->
+          <div v-if="aiHunt" class="rounded border border-edge bg-graphite-surface p-2 text-xs">
+            <div class="mb-1 font-medium text-ink">Threat hunting (draf AI)</div>
+            <p class="text-ink-muted">{{ aiHunt.hypothesis }}</p>
+            <div v-for="(q, i) in aiHunt.queries" :key="i" class="mt-1">
+              <div class="text-ink-muted">• {{ q.description }}</div>
+              <code v-if="q.filter" class="font-mono text-[10px] text-ink-dim">{{ q.filter }}</code>
+            </div>
+          </div>
         </div>
 
         <!-- Aksi case management -->

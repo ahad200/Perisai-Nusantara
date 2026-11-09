@@ -4,6 +4,7 @@ Import semua model di sini agar metadata Base terisi untuk Alembic & create_all.
 """
 from app.models.alert import Alert, AlertStatus
 from app.models.asset import Asset, Criticality
+from app.models.attribution import AttributionHypothesis, Confidence, ValidationStatus
 from app.models.audit import AuditEntry
 from app.models.detection import (
     DetectionRule,
@@ -75,4 +76,7 @@ __all__ = [
     "ReportKind",
     "ReportStatus",
     "ReportCadence",
+    "AttributionHypothesis",
+    "Confidence",
+    "ValidationStatus",
 ]

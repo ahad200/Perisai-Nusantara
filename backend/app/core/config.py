@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     # TOTP
     totp_issuer: str = "PN-X"
 
+    # Sovereign LLM (M10, F2). Default "stub": deterministik, offline, tanpa jaringan
+    # (etos "semua adapter mock"). "ollama": LLM lokal open-weight — HANYA loopback
+    # (air-gapped, egress diblokir, FR-404 / §A.5 no.5). Tak ada opsi host eksternal.
+    llm_provider: str = "stub"  # stub | ollama
+    llm_model: str = "llama3.1:8b"
+    llm_base_url: str = "http://127.0.0.1:11434"  # wajib loopback — dijaga di agents/llm.py
+    llm_timeout_seconds: int = 30
+
     @property
     def is_prod(self) -> bool:
         return self.environment.lower() in {"prod", "production"}
