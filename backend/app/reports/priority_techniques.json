@@ -1,0 +1,71 @@
+{
+  "_comment": "Teknik ATT&CK prioritas dari threat model F0 (PRD §C.3 Coverage, metrik Coverage ATT&CK). Coverage diukur terhadap teknik prioritas ini, bukan seluruh matriks ATT&CK (PRD prinsip no.7). Urutan taktik mengikuti kill-chain ATT&CK.",
+  "tactics": [
+    {
+      "id": "TA0043",
+      "name": "Reconnaissance",
+      "name_id": "Pengintaian",
+      "techniques": [
+        { "id": "T1595", "name": "Active Scanning" },
+        { "id": "T1592", "name": "Gather Victim Host Information" }
+      ]
+    },
+    {
+      "id": "TA0001",
+      "name": "Initial Access",
+      "name_id": "Akses Awal",
+      "techniques": [
+        { "id": "T1190", "name": "Exploit Public-Facing Application" },
+        { "id": "T1133", "name": "External Remote Services" }
+      ]
+    },
+    {
+      "id": "TA0002",
+      "name": "Execution",
+      "name_id": "Eksekusi",
+      "techniques": [
+        { "id": "T1059", "name": "Command and Scripting Interpreter" }
+      ]
+    },
+    {
+      "id": "TA0003",
+      "name": "Persistence",
+      "name_id": "Persistensi",
+      "techniques": [
+        { "id": "T1098", "name": "Account Manipulation" }
+      ]
+    },
+    {
+      "id": "TA0005",
+      "name": "Defense Evasion",
+      "name_id": "Pengelabuan Pertahanan",
+      "techniques": [
+        { "id": "T1036", "name": "Masquerading" }
+      ]
+    },
+    {
+      "id": "TA0006",
+      "name": "Credential Access",
+      "name_id": "Akses Kredensial",
+      "techniques": [
+        { "id": "T1110", "name": "Brute Force" }
+      ]
+    },
+    {
+      "id": "TA0011",
+      "name": "Command and Control",
+      "name_id": "Komando & Kendali",
+      "techniques": [
+        { "id": "T1071", "name": "Application Layer Protocol" }
+      ]
+    },
+    {
+      "id": "TA0040",
+      "name": "Impact",
+      "name_id": "Dampak",
+      "techniques": [
+        { "id": "T1486", "name": "Data Encrypted for Impact" }
+      ]
+    }
+  ]
+}

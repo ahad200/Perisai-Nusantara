@@ -11,10 +11,12 @@ from app.api import (
     routes_assets,
     routes_audit,
     routes_auth,
+    routes_dashboard,
     routes_detection,
     routes_events,
     routes_incidents,
     routes_intel,
+    routes_reports,
     routes_sim,
     routes_soar,
     routes_users,
@@ -39,7 +41,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=__version__,
-    description="Platform Pertahanan Siber Adaptif — prototipe (data simulasi). M1–M8.",
+    description="Platform Pertahanan Siber Adaptif — prototipe (data simulasi). M1–M9.",
     lifespan=lifespan,
 )
 
@@ -53,6 +55,8 @@ app.include_router(routes_detection.router)
 app.include_router(routes_alerts.router)
 app.include_router(routes_incidents.router)
 app.include_router(routes_soar.router)
+app.include_router(routes_dashboard.router)
+app.include_router(routes_reports.router)
 app.include_router(routes_sim.router)
 
 

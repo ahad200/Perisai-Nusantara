@@ -49,6 +49,24 @@ const routes: RouteRecordRaw[] = [
     meta: { permission: "soar:read" },
   },
   {
+    path: "/coverage",
+    name: "coverage",
+    component: () => import("@/views/CoverageView.vue"),
+    meta: { permission: "dashboard:read" },
+  },
+  {
+    path: "/eksekutif",
+    name: "eksekutif",
+    component: () => import("@/views/EksekutifView.vue"),
+    meta: { permission: "dashboard:read" },
+  },
+  {
+    path: "/laporan",
+    name: "laporan",
+    component: () => import("@/views/LaporanView.vue"),
+    meta: { permission: "report:read" },
+  },
+  {
     path: "/pengguna",
     name: "pengguna",
     component: () => import("@/views/PenggunaView.vue"),

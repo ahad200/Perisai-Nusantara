@@ -15,6 +15,13 @@ from app.models.enrichment import EnrichmentKind, EnrichmentRecord
 from app.models.event import Event
 from app.models.incident import Incident, IncidentNote, IncidentStatus, NoteKind
 from app.models.ioc import IoC, IoCStatus, IoCType, Tlp
+from app.models.report import (
+    Report,
+    ReportCadence,
+    ReportKind,
+    ReportSchedule,
+    ReportStatus,
+)
 from app.models.soar import (
     ActionExecution,
     ActionStatus,
@@ -63,4 +70,9 @@ __all__ = [
     "ApprovalStatus",
     "Notification",
     "BreakGlass",
+    "Report",
+    "ReportSchedule",
+    "ReportKind",
+    "ReportStatus",
+    "ReportCadence",
 ]

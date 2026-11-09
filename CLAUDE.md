@@ -43,7 +43,10 @@ backend/app/
   correlation/ korelasi alert -> Insiden (per entitas) + case management (M7)
   soar/        playbook + Matriks Otonomi (config) + approval/timeout/eskalasi +
                rollback + dry-run + adapter mock + notifikasi in-app (M8)
-  agents/ reports/  (milestone berikutnya)
+  reports/     metrik Situasi/Eksekutif + coverage ATT&CK (teknik prioritas) +
+               ELANG-6 Reporter (template deterministik) + penulis PDF tanpa
+               dependensi + jadwal laporan (M9)
+  agents/      (milestone berikutnya — M10, F2)
 backend/tests/   pytest
 frontend/        Vue 3 (M2)
 ```
@@ -87,7 +90,15 @@ frontend/        Vue 3 (M2)
       adapter **mock** (§A.5 no.8); notifikasi in-app; **break-glass** (§7 no.3);
       halaman SOAR (approval, run, rollback, break-glass) + "jalankan playbook" dari
       detail insiden. Matriks teruji untuk **semua** kombinasi severity×kritikalitas.
-- [ ] M9 — Dashboard Situasi/Eksekutif + coverage ATT&CK + audit UI + ELANG-6 laporan.
+- [x] **M9** — Situasi & pelaporan: **dashboard Situasi (COP)** (postur, insiden
+      aktif/severity, approval tertunda, kesehatan sumber data, tren 24 jam, peta
+      segmen), **dashboard Eksekutif** (KPI MTTD/MTTR/FP rate/coverage + pembanding
+      periode + tren harian), **Coverage ATT&CK** (matriks taktik × teknik prioritas
+      + gap analysis, metrik tervalidasi), halaman **Audit** (M2, verifikasi hash
+      chain), **ELANG-6 Reporter** template deterministik (harian/mingguan/bulanan/
+      insiden/eksekutif/kepatuhan) dengan **ekspor PDF** (penulis PDF mandiri, tanpa
+      dependensi) + **jadwal** (run-due). Laporan lahir `draft`, wajib **disetujui
+      manusia** sebelum kirim eksternal. Role commander/admin: `report:approve`+`manage`.
 - [ ] M10 — (F2) Agen LLM (Ollama) + AttributionHypothesis.
 
 ## Menjalankan

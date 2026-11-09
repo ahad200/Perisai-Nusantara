@@ -43,6 +43,7 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const canManage = computed(() => auth.can("incident:manage"));
 const canExecute = computed(() => auth.can("soar:execute"));
+const canReport = computed(() => auth.can("report:generate"));
 const runMsg = ref<string | null>(null);
 
 const items = ref<Incident[]>([]);
@@ -145,6 +146,19 @@ async function runPlaybook(mode: "auto" | "dry_run") {
       "/soar/run", { method: "POST", body: { incident_id: detail.value.id, mode } },
     );
     runMsg.value = `${t("incident.runStarted")}: ${r.playbook_code} → ${r.status}`;
+  } catch (e) {
+    runMsg.value = e instanceof ApiError ? e.message : "Gagal";
+  }
+}
+
+async function generateReport() {
+  if (!detail.value) return;
+  runMsg.value = null;
+  try {
+    const r = await apiFetch<{ code: string }>(
+      "/reports", { method: "POST", body: { kind: "incident", incident_id: detail.value.id } },
+    );
+    runMsg.value = `Laporan insiden ${r.code} dibuat (draf) — tinjau di halaman Laporan.`;
   } catch (e) {
     runMsg.value = e instanceof ApiError ? e.message : "Gagal";
   }
@@ -322,10 +336,11 @@ watch([severity, status, activeOnly], load);
       </div>
       <SkeletonRow v-else :rows="5" />
 
-      <template v-if="(canManage || canExecute) && detail" #footer>
+      <template v-if="(canManage || canExecute || canReport) && detail" #footer>
         <AppButton v-if="canManage" size="sm" variant="primary" @click="assign">{{ t("incident.assign") }}</AppButton>
         <AppButton v-if="canExecute" size="sm" variant="default" @click="runPlaybook('auto')">{{ t("incident.runPlaybook") }}</AppButton>
         <AppButton v-if="canExecute" size="sm" variant="ghost" @click="runPlaybook('dry_run')">{{ t("incident.dryRun") }}</AppButton>
+        <AppButton v-if="canReport" size="sm" variant="ghost" @click="generateReport">Buat laporan</AppButton>
       </template>
     </Modal>
   </div>
