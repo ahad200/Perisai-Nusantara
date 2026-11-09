@@ -9,6 +9,7 @@ import CritBadge from "@/components/ui/CritBadge.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import Modal from "@/components/ui/Modal.vue";
 import { apiFetch, ApiError } from "@/lib/api";
+import { normalizeRole } from "@/lib/rbac";
 import { formatWIB } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth";
 import { useI18n } from "vue-i18n";
@@ -237,7 +238,7 @@ watch([severity, status, mineOnly], () => { cursor.value = 0; load(); });
             </td>
             <td class="px-3 py-1.5 text-right font-mono tnum text-ink-muted">{{ a.event_count }}</td>
             <td class="px-3 py-1.5"><StatusBadge :tone="statusTone(a.status)">{{ a.status }}</StatusBadge></td>
-            <td class="px-3 py-1.5 text-ink-muted">{{ a.assignee ?? "—" }}</td>
+            <td class="px-3 py-1.5 text-ink-muted" :title="a.assignee && normalizeRole(a.assignee) !== a.assignee ? `asli: ${a.assignee}` : undefined">{{ a.assignee ? normalizeRole(a.assignee) : "—" }}</td>
           </tr>
         </tbody>
       </table>
@@ -259,7 +260,7 @@ watch([severity, status, mineOnly], () => { cursor.value = 0; load(); });
           <dt class="text-ink-muted">{{ t("alert.status") }}</dt>
           <dd><StatusBadge :tone="statusTone(detail.status)">{{ detail.status }}</StatusBadge></dd>
           <dt class="text-ink-muted">{{ t("alert.assignee") }}</dt>
-          <dd class="text-ink">{{ detail.assignee ?? "—" }}</dd>
+          <dd class="text-ink" :title="detail.assignee && normalizeRole(detail.assignee) !== detail.assignee ? `asli: ${detail.assignee}` : undefined">{{ detail.assignee ? normalizeRole(detail.assignee) : "—" }}</dd>
           <dt class="text-ink-muted">{{ t("alert.explanation") }}</dt>
           <dd class="text-ink-muted">{{ detail.explanation }}</dd>
         </dl>

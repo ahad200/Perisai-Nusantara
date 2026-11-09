@@ -49,6 +49,24 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   auditor: [...SOC_BASE, "audit:read", "audit:verify"],
 };
 
+// Peta role lama (sebelum konsolidasi 9→4) ke padanan 4-role, untuk TAMPILAN saja.
+// Data historis (mis. penugasan alert lama) tak diubah — hanya dirapikan saat render.
+const LEGACY_ROLE_MAP: Record<string, Role> = {
+  analyst_t1: "operator",
+  analyst_t2: "operator",
+  analyst_t3: "operator",
+  responder: "operator",
+  purple_team: "operator",
+  ti_officer: "intel",
+  platform_admin: "commander",
+};
+
+/** Normalisasi nama role/username lama ke label 4-role saat ini (display-only). */
+export function normalizeRole(name: string | null | undefined): string {
+  if (!name) return "";
+  return LEGACY_ROLE_MAP[name] ?? name;
+}
+
 export function permissionsFor(role: string | null | undefined): Permission[] {
   if (!role) return [];
   return ROLE_PERMISSIONS[role as Role] ?? [];

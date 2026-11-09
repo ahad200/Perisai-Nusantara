@@ -125,12 +125,12 @@ onMounted(load);
 
         <!-- Tren alert 24 jam -->
         <Panel title="Tren alert · 24 jam">
-          <div v-if="data.trend_24h.length" class="flex h-24 items-end gap-0.5">
+          <div v-if="data.trend_24h.length" class="flex h-24 items-end gap-0.5 border-b border-edge">
             <div
               v-for="(t, i) in data.trend_24h"
               :key="i"
-              class="flex-1 rounded-sm bg-accent/60 hover:bg-accent"
-              :style="{ height: Math.max(2, (t.alerts / maxTrend) * 100) + '%' }"
+              class="flex-1 rounded-sm bg-accent/70 hover:bg-accent"
+              :style="{ height: t.alerts > 0 ? Math.max(3, (t.alerts / maxTrend) * 100) + '%' : '0%' }"
               :title="`${t.hour} — ${t.alerts} alert`"
             />
           </div>

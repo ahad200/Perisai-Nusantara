@@ -27,6 +27,7 @@ export default {
           dim: "var(--text-dim)",
         },
         accent: { DEFAULT: "var(--accent)", ink: "var(--accent-ink)" },
+        data2: "var(--data-2)",
         sev: {
           critical: "var(--sev-critical)",
           high: "var(--sev-high)",

@@ -44,15 +44,22 @@ function barH(value: number): string {
 function fmt(v: number | null | undefined, unit = ""): string {
   return v === null || v === undefined ? "—" : `${v}${unit}`;
 }
-// Delta vs periode sebelumnya, diwarnai menurut arah "baik".
-function delta(k: Kpi): { text: string; tone: "ok" | "warn" | "muted" } {
+// Durasi menit → satuan terbaca (menit/jam/hari) agar angka besar tak membingungkan.
+function fmtDuration(minutes: number | null | undefined): string {
+  if (minutes === null || minutes === undefined) return "—";
+  if (minutes < 90) return `${Math.round(minutes)} mnt`;
+  if (minutes < 1440) return `${(minutes / 60).toFixed(1)} jam`;
+  return `${(minutes / 1440).toFixed(1)} hari`;
+}
+// Pembanding vs periode sebelumnya. Bila tak ada pembanding → "data awal" (bukan "—").
+function cmp(k: Kpi): { text: string; tone: "ok" | "warn" | "muted" } {
   if (k.value === null || k.value === undefined || k.prev === null || k.prev === undefined) {
-    return { text: "—", tone: "muted" };
+    return { text: "data awal", tone: "muted" };
   }
   const d = Math.round((k.value - k.prev) * 10) / 10;
-  if (d === 0) return { text: "±0", tone: "muted" };
+  if (d === 0) return { text: "±0 vs lalu", tone: "muted" };
   const improved = k.better === "lower" ? d < 0 : d > 0;
-  return { text: `${d > 0 ? "+" : ""}${d}`, tone: improved ? "ok" : "warn" };
+  return { text: `${d > 0 ? "+" : ""}${d} vs lalu`, tone: improved ? "ok" : "warn" };
 }
 
 async function load() {
@@ -107,18 +114,18 @@ onMounted(load);
       <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Panel>
           <div class="text-xs text-ink-dim">MTTD</div>
-          <div class="text-2xl font-semibold text-ink">{{ fmt(data.kpis.mttd_minutes.value, " m") }}</div>
-          <StatusBadge :tone="delta(data.kpis.mttd_minutes).tone">{{ delta(data.kpis.mttd_minutes).text }} vs lalu</StatusBadge>
+          <div class="text-2xl font-semibold text-ink">{{ fmtDuration(data.kpis.mttd_minutes.value) }}</div>
+          <StatusBadge :tone="cmp(data.kpis.mttd_minutes).tone">{{ cmp(data.kpis.mttd_minutes).text }}</StatusBadge>
         </Panel>
         <Panel>
           <div class="text-xs text-ink-dim">MTTR</div>
-          <div class="text-2xl font-semibold text-ink">{{ fmt(data.kpis.mttr_minutes.value, " m") }}</div>
-          <StatusBadge :tone="delta(data.kpis.mttr_minutes).tone">{{ delta(data.kpis.mttr_minutes).text }} vs lalu</StatusBadge>
+          <div class="text-2xl font-semibold text-ink">{{ fmtDuration(data.kpis.mttr_minutes.value) }}</div>
+          <StatusBadge :tone="cmp(data.kpis.mttr_minutes).tone">{{ cmp(data.kpis.mttr_minutes).text }}</StatusBadge>
         </Panel>
         <Panel>
           <div class="text-xs text-ink-dim">FP rate</div>
           <div class="text-2xl font-semibold text-ink">{{ fmt(data.kpis.fp_rate_pct.value, "%") }}</div>
-          <StatusBadge :tone="delta(data.kpis.fp_rate_pct).tone">{{ delta(data.kpis.fp_rate_pct).text }} vs lalu</StatusBadge>
+          <StatusBadge :tone="cmp(data.kpis.fp_rate_pct).tone">{{ cmp(data.kpis.fp_rate_pct).text }}</StatusBadge>
         </Panel>
         <Panel>
           <div class="text-xs text-ink-dim">Coverage ATT&CK</div>
@@ -130,20 +137,24 @@ onMounted(load);
         <Panel>
           <div class="text-xs text-ink-dim">Insiden</div>
           <div class="text-2xl font-semibold text-ink">{{ fmt(data.kpis.incidents.value) }}</div>
-          <StatusBadge :tone="delta(data.kpis.incidents).tone">{{ delta(data.kpis.incidents).text }} vs lalu</StatusBadge>
+          <StatusBadge :tone="cmp(data.kpis.incidents).tone">{{ cmp(data.kpis.incidents).text }}</StatusBadge>
         </Panel>
       </div>
 
       <Panel title="Tren harian · insiden & alert">
-        <div v-if="data.trend_daily.length" class="flex h-28 items-end gap-0.5 overflow-hidden">
+        <!-- border-b = garis-dasar nol, agar tren yang jarang tetap terbaca utuh. -->
+        <div v-if="data.trend_daily.length" class="flex h-28 items-end gap-0.5 overflow-hidden border-b border-edge">
           <div v-for="(d, i) in data.trend_daily" :key="i" class="flex h-full min-h-0 flex-1 flex-col justify-end gap-0.5" :title="`${d.date} — ${d.incidents} insiden, ${d.alerts} alert`">
-            <div class="rounded-sm bg-accent/60" :style="{ height: barH(d.alerts) }" />
-            <div class="rounded-sm bg-sev-medium/70" :style="{ height: barH(d.incidents) }" />
+            <div class="rounded-sm bg-accent/70" :style="{ height: barH(d.alerts) }" />
+            <div class="rounded-sm bg-data2" :style="{ height: barH(d.incidents) }" />
           </div>
         </div>
-        <div class="mt-1 flex justify-between font-mono text-[10px] text-ink-dim">
+        <div class="mt-1 flex items-center justify-between font-mono text-[10px] text-ink-dim">
           <span>{{ data.trend_daily[0]?.date }}</span>
-          <span>alert (aksen) · insiden (kuning)</span>
+          <span class="flex items-center gap-3">
+            <span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-sm bg-accent/70" />alert</span>
+            <span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-sm bg-data2" />insiden</span>
+          </span>
           <span>{{ data.trend_daily[data.trend_daily.length - 1]?.date }}</span>
         </div>
       </Panel>
@@ -154,7 +165,7 @@ onMounted(load);
             <tr><th class="py-1">Kode</th><th class="py-1">Severity</th><th class="py-1">Status</th><th class="py-1">Host</th><th class="py-1">Teknik</th><th class="py-1 text-right">Alert</th></tr>
           </thead>
           <tbody>
-            <tr v-for="k in data.key_incidents" :key="k.incident_code" class="border-t border-edge/50">
+            <tr v-for="k in data.key_incidents" :key="k.incident_code" class="border-t border-edge/50 hover:bg-graphite-raised/50">
               <td class="py-1 font-mono text-ink">{{ k.incident_code }}</td>
               <td class="py-1"><SeverityBadge :severity="(k.severity as Sev)" /></td>
               <td class="py-1 text-ink-muted">{{ k.status }}</td>

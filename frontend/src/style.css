@@ -19,6 +19,10 @@
   --accent: #c9a24a; /* amber redup */
   --accent-ink: #11140f; /* teks di atas aksen */
 
+  /* Seri-2 grafik: slate kebiruan — SENGAJA bukan warna severity, agar dua seri
+     (alert=aksen, insiden=slate) mudah dibedakan tanpa menyalahgunakan severity. */
+  --data-2: #5f7d99;
+
   --sev-critical: #e5484d;
   --sev-high: #ef8a3c;
   --sev-medium: #d9c04a;
@@ -41,6 +45,8 @@
 
   --accent: #8a6d1f;
   --accent-ink: #ffffff;
+
+  --data-2: #3f5c78;
 
   --sev-critical: #c0272d;
   --sev-high: #b5610f;
