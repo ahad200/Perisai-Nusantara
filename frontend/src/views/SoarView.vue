@@ -250,7 +250,7 @@ onMounted(load);
                 <span v-for="(s, i) in pb.steps" :key="i"
                       class="rounded border border-edge px-1.5 py-0.5 font-mono text-[11px]"
                       :class="s.disruptive ? 'text-ink' : 'text-ink-muted'">
-                  {{ s.action }}<span v-if="s.pre_approved" class="text-ink-dim"> ✓CAB</span>
+                  {{ s.action }}<span v-if="s.pre_approved" class="ml-1 rounded-sm border border-edge px-1 text-[9px] uppercase tracking-wide text-ink-dim" title="Pra-disetujui CAB">CAB</span>
                 </span>
               </div>
             </div>

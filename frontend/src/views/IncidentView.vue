@@ -434,8 +434,9 @@ watch([severity, status, activeOnly], load);
               <div v-if="h.alternatives.length" class="mt-1 text-xs text-ink-dim">
                 Alternatif: {{ h.alternatives.join(" · ") }}
               </div>
-              <div v-if="h.injection_flags.length" class="mt-1 text-xs text-sev-medium">
-                ⚠ Indikator prompt-injection pada data: {{ h.injection_flags.length }} (diabaikan oleh model)
+              <div v-if="h.injection_flags.length" class="mt-1 flex items-center gap-1.5 text-xs">
+                <StatusBadge tone="warn">Prompt-injection</StatusBadge>
+                <span class="text-ink-muted">{{ h.injection_flags.length }} indikator pada data — diabaikan oleh model</span>
               </div>
               <div v-if="canValidate && h.status === 'proposed'" class="mt-1.5 flex gap-1.5">
                 <AppButton size="sm" variant="primary" :loading="aiBusy" @click="validateHyp(h, 'validated')">Validasi</AppButton>

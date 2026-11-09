@@ -8,6 +8,7 @@ import StatusBadge from "@/components/ui/StatusBadge.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import { apiFetch, ApiError } from "@/lib/api";
 import { formatWIB } from "@/lib/time";
+import { normalizeRole } from "@/lib/rbac";
 import { useAuthStore } from "@/stores/auth";
 import { useI18n } from "vue-i18n";
 
@@ -75,7 +76,10 @@ onMounted(load);
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-ink">{{ $t("audit.title") }}</h1>
+      <div>
+        <h1 class="text-lg font-semibold text-ink">{{ $t("audit.title") }}</h1>
+        <p class="text-xs text-ink-dim">Rantai hash SHA-256 · append-only, tak bisa diubah/dihapus siapa pun.</p>
+      </div>
       <AppButton
         v-if="auth.can('audit:verify')"
         size="sm"
@@ -115,6 +119,10 @@ onMounted(load);
 
     <DataTable v-else :columns="columns()" :rows="rows" row-key="id">
       <template #[`cell:ts`]="{ value }">{{ formatWIB(value as string) }}</template>
+      <template #[`cell:actor_id`]="{ row }">
+        <span class="text-ink-muted">{{ normalizeRole(row.actor_id) || "—" }}</span>
+        <span v-if="row.actor_type === 'agent'" class="ml-1 rounded-sm border border-edge px-1 text-[9px] uppercase tracking-wide text-ink-dim">AI</span>
+      </template>
       <template #[`cell:object`]="{ row }">
         <span class="font-mono text-ink-muted">
           {{ row.object_type ?? "—" }}<template v-if="row.object_id">:{{ row.object_id }}</template>
@@ -124,5 +132,6 @@ onMounted(load);
         <span class="font-mono text-ink-dim">{{ (value as string).slice(0, 12) }}…</span>
       </template>
     </DataTable>
+    <div v-if="rows.length" class="text-xs text-ink-dim">{{ rows.length }} entri terbaru</div>
   </div>
 </template>

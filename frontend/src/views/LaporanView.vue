@@ -7,6 +7,7 @@ import EmptyState from "@/components/ui/EmptyState.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import { apiFetch, ApiError } from "@/lib/api";
 import { formatWIB } from "@/lib/time";
+import { normalizeRole } from "@/lib/rbac";
 import { useAuthStore } from "@/stores/auth";
 
 interface Report {
@@ -40,6 +41,15 @@ const KINDS = [
   { v: "executive", l: "Eksekutif" },
   { v: "compliance", l: "Kepatuhan" },
 ];
+
+// Label ramah untuk enum jenis/irama laporan (termasuk "incident" dari halaman Insiden).
+const KIND_LABEL: Record<string, string> = {
+  ...Object.fromEntries(KINDS.map((k) => [k.v, k.l])),
+  incident: "Insiden",
+};
+const CADENCE_LABEL: Record<string, string> = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
+const kindLabel = (k: string) => KIND_LABEL[k] ?? k;
+const cadenceLabel = (c: string) => CADENCE_LABEL[c] ?? c;
 
 async function load() {
   loading.value = true;
@@ -164,13 +174,13 @@ onMounted(load);
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in reports" :key="r.id" class="border-t border-edge/50 align-top">
+            <tr v-for="r in reports" :key="r.id" class="border-t border-edge/50 align-top hover:bg-graphite-raised/50">
               <td class="py-1.5 font-mono text-ink">{{ r.code }}</td>
               <td class="py-1.5 text-ink-muted">
                 <div class="text-ink">{{ r.title }}</div>
                 <div class="text-xs text-ink-dim">{{ r.summary }}</div>
               </td>
-              <td class="py-1.5 text-ink-muted">{{ r.kind }}</td>
+              <td class="py-1.5 text-ink-muted">{{ kindLabel(r.kind) }}</td>
               <td class="py-1.5">
                 <StatusBadge :tone="r.status === 'approved' ? 'ok' : 'warn'">
                   {{ r.status === 'approved' ? 'disetujui' : 'draf' }}
@@ -212,11 +222,11 @@ onMounted(load);
             <tr><th class="py-1">Nama</th><th class="py-1">Jenis</th><th class="py-1">Irama</th><th class="py-1">Penerima</th><th class="py-1">Berikutnya</th></tr>
           </thead>
           <tbody>
-            <tr v-for="s in schedules" :key="s.id" class="border-t border-edge/50">
+            <tr v-for="s in schedules" :key="s.id" class="border-t border-edge/50 hover:bg-graphite-raised/50">
               <td class="py-1 text-ink">{{ s.name }}</td>
-              <td class="py-1 text-ink-muted">{{ s.kind }}</td>
-              <td class="py-1 text-ink-muted">{{ s.cadence }}</td>
-              <td class="py-1 font-mono text-ink-dim">{{ s.recipient_role }}</td>
+              <td class="py-1 text-ink-muted">{{ kindLabel(s.kind) }}</td>
+              <td class="py-1 text-ink-muted">{{ cadenceLabel(s.cadence) }}</td>
+              <td class="py-1 font-mono text-ink-dim">{{ normalizeRole(s.recipient_role) }}</td>
               <td class="py-1 font-mono text-xs text-ink-dim">{{ formatWIB(s.next_run_at) }}</td>
             </tr>
           </tbody>

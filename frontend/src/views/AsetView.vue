@@ -92,20 +92,25 @@ onMounted(load);
 
     <EmptyState v-else-if="rows.length === 0" :message="$t('common.empty')" />
 
-    <DataTable v-else :columns="columns()" :rows="rows" row-key="id">
-      <template #[`cell:criticality`]="{ value }">
-        <CritBadge :level="value as string" />
-      </template>
-      <template #[`cell:ip`]="{ value }">{{ value ?? "—" }}</template>
-      <template #[`cell:tags`]="{ value }">
-        <span class="flex flex-wrap gap-1">
-          <span
-            v-for="tag in (value as string[])"
-            :key="tag"
-            class="rounded-sm border border-edge bg-graphite-raised px-1.5 py-0.5 font-mono text-xs text-ink-muted"
-          >{{ tag }}</span>
-        </span>
-      </template>
-    </DataTable>
+    <template v-else>
+      <DataTable :columns="columns()" :rows="rows" row-key="id">
+        <template #[`cell:criticality`]="{ value }">
+          <CritBadge :level="value as string" />
+        </template>
+        <template #[`cell:ip`]="{ value }">{{ value ?? "—" }}</template>
+        <template #[`cell:tags`]="{ value }">
+          <span class="flex flex-wrap gap-1">
+            <span
+              v-for="tag in (value as string[])"
+              :key="tag"
+              class="rounded-sm border border-edge bg-graphite-raised px-1.5 py-0.5 font-mono text-xs text-ink-muted"
+            >{{ tag }}</span>
+          </span>
+        </template>
+      </DataTable>
+      <div class="text-xs text-ink-dim">
+        {{ rows.length }} aset{{ crit ? ` · ${crit}` : "" }}{{ q.trim() ? ` · "${q.trim()}"` : "" }}
+      </div>
+    </template>
   </div>
 </template>
