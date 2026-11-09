@@ -19,4 +19,14 @@ export default defineConfig({
       },
     },
   },
+  // `vite preview` (menyajikan build produksi) memakai proxy terpisah dari dev.
+  preview: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/api/, ""),
+      },
+    },
+  },
 });

@@ -78,7 +78,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import("@/views/AuditView.vue"),
     meta: { permission: "audit:read" },
   },
-  { path: "/dev/components", name: "components", component: () => import("@/views/DevComponentsView.vue") },
+  // Galeri komponen: hanya di mode dev. Di build produksi route ini tidak
+  // didaftarkan sama sekali → akses langsung /dev/components jatuh ke NotFound.
+  ...(import.meta.env.DEV
+    ? [{ path: "/dev/components", name: "components", component: () => import("@/views/DevComponentsView.vue") }]
+    : []),
   { path: "/:pathMatch(.*)*", name: "notfound", component: () => import("@/views/NotFoundView.vue") },
 ];
 
