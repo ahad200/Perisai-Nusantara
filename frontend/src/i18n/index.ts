@@ -52,6 +52,8 @@ const id = {
     active: "Aktif",
     legend: "Model 4-role (RBAC)",
     legendHint: "Pemisahan tugas: eksekusi ⟂ persetujuan ⟂ validasi atribusi ⟂ audit.",
+    allRoles: "Semua role",
+    countShown: "{shown} dari {total} pengguna",
     roles: {
       operator: { label: "Operator", desc: "Kerja tangan SOC: simulasi, deteksi, triase, kelola insiden, eksekusi/rollback playbook, jalankan agen LLM, susun draf laporan. Tidak menyetujui aksinya sendiri." },
       commander: { label: "Commander", desc: "Supervisi & admin: menyetujui approval SOAR + break-glass, menyetujui & menjadwalkan laporan, kelola pengguna/aset/aturan. Tidak mengeksekusi playbook." },
@@ -306,6 +308,8 @@ const en: typeof id = {
     active: "Active",
     legend: "4-role model (RBAC)",
     legendHint: "Separation of duties: execute ⟂ approve ⟂ validate attribution ⟂ audit.",
+    allRoles: "All roles",
+    countShown: "{shown} of {total} users",
     roles: {
       operator: { label: "Operator", desc: "Hands-on SOC: simulation, detection, triage, incident handling, playbook execution/rollback, run LLM agents, draft reports. Cannot approve its own actions." },
       commander: { label: "Commander", desc: "Supervision & admin: approve SOAR + break-glass, approve & schedule reports, manage users/assets/rules. Does not execute playbooks." },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import Panel from "@/components/ui/Panel.vue";
 import DataTable, { type Column } from "@/components/ui/DataTable.vue";
 import SkeletonRow from "@/components/ui/SkeletonRow.vue";
@@ -15,6 +15,7 @@ const { t } = useI18n();
 const rows = ref<CurrentUser[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const roleFilter = ref<string>(""); // "" = semua role
 
 // Urutan tampil untuk legenda 4-role (eksekusi → persetujuan → intel → audit).
 const ROLE_ORDER: Role[] = ["operator", "commander", "intel", "auditor"];
@@ -24,6 +25,22 @@ function roleLabel(role: string): string {
   const label = t(key);
   return label === key ? role : label; // fallback: tampilkan role mentah bila tak dikenal
 }
+
+// Opsi filter: 4 role dikenal + role tak dikenal yang muncul di data (fail-safe).
+const roleOptions = computed<string[]>(() => {
+  const present = new Set(rows.value.map((r) => r.role));
+  const extra = [...present].filter((r) => !ROLE_ORDER.includes(r as Role)).sort();
+  return [...ROLE_ORDER, ...extra];
+});
+
+// Baris tampil (plain ref agar cocok dengan generic DataTable, bukan computed).
+const filteredRows = ref<CurrentUser[]>([]);
+function applyFilter() {
+  filteredRows.value = roleFilter.value
+    ? rows.value.filter((r) => r.role === roleFilter.value)
+    : rows.value;
+}
+watch([rows, roleFilter], applyFilter);
 
 const columns = (): Column[] => [
   { key: "id", label: t("pengguna.id"), mono: true, align: "right", width: "64px" },
@@ -76,6 +93,21 @@ onMounted(load);
       </dl>
     </Panel>
 
+    <div v-if="!loading && !error && rows.length" class="flex flex-wrap items-center gap-3">
+      <select
+        v-model="roleFilter"
+        class="h-9 rounded border border-edge bg-graphite-base px-2.5 text-sm text-ink focus:border-accent"
+      >
+        <option value="">{{ t("pengguna.allRoles") }}</option>
+        <option v-for="role in roleOptions" :key="role" :value="role">
+          {{ roleLabel(role) }} ({{ role }})
+        </option>
+      </select>
+      <span class="text-xs text-ink-muted">
+        {{ t("pengguna.countShown", { shown: filteredRows.length, total: rows.length }) }}
+      </span>
+    </div>
+
     <SkeletonRow v-if="loading" />
 
     <Panel v-else-if="error">
@@ -88,7 +120,9 @@ onMounted(load);
 
     <EmptyState v-else-if="rows.length === 0" :message="$t('common.empty')" />
 
-    <DataTable v-else :columns="columns()" :rows="rows" row-key="id">
+    <EmptyState v-else-if="filteredRows.length === 0" :message="$t('common.empty')" />
+
+    <DataTable v-else :columns="columns()" :rows="filteredRows" row-key="id">
       <template #[`cell:role`]="{ value }">
         <span class="inline-flex items-center gap-2">
           <span class="rounded border border-edge bg-graphite-raised px-2 py-0.5 font-mono text-xs text-ink">{{ value }}</span>
