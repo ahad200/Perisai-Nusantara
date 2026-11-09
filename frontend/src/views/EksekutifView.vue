@@ -29,9 +29,17 @@ const data = ref<Exec | null>(null);
 const genMsg = ref<string | null>(null);
 const busy = ref(false);
 
+// Batang ditumpuk (alert + insiden), jadi pembaginya total tumpukan per hari —
+// bukan nilai terbesar salah satunya — supaya hari tertinggi = 100% tanpa luber.
 const maxDay = computed(() =>
-  Math.max(1, ...(data.value?.trend_daily ?? []).map((d) => Math.max(d.incidents, d.alerts))),
+  Math.max(1, ...(data.value?.trend_daily ?? []).map((d) => d.incidents + d.alerts)),
 );
+
+// Tinggi batang dalam persen; beri lantai kecil agar nilai > 0 tetap terlihat.
+function barH(value: number): string {
+  if (value <= 0) return "0%";
+  return Math.max(3, (value / maxDay.value) * 100) + "%";
+}
 
 function fmt(v: number | null | undefined, unit = ""): string {
   return v === null || v === undefined ? "—" : `${v}${unit}`;
@@ -127,10 +135,10 @@ onMounted(load);
       </div>
 
       <Panel title="Tren harian · insiden & alert">
-        <div v-if="data.trend_daily.length" class="flex h-28 items-end gap-0.5">
-          <div v-for="(d, i) in data.trend_daily" :key="i" class="flex flex-1 flex-col justify-end gap-0.5" :title="`${d.date} — ${d.incidents} insiden, ${d.alerts} alert`">
-            <div class="rounded-sm bg-accent/60" :style="{ height: (d.alerts / maxDay) * 100 + '%' }" />
-            <div class="rounded-sm bg-sev-medium/70" :style="{ height: (d.incidents / maxDay) * 100 + '%' }" />
+        <div v-if="data.trend_daily.length" class="flex h-28 items-end gap-0.5 overflow-hidden">
+          <div v-for="(d, i) in data.trend_daily" :key="i" class="flex h-full min-h-0 flex-1 flex-col justify-end gap-0.5" :title="`${d.date} — ${d.incidents} insiden, ${d.alerts} alert`">
+            <div class="rounded-sm bg-accent/60" :style="{ height: barH(d.alerts) }" />
+            <div class="rounded-sm bg-sev-medium/70" :style="{ height: barH(d.incidents) }" />
           </div>
         </div>
         <div class="mt-1 flex justify-between font-mono text-[10px] text-ink-dim">
