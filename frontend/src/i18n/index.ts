@@ -50,6 +50,14 @@ const id = {
     role: "Role",
     mfa: "MFA",
     active: "Aktif",
+    legend: "Model 4-role (RBAC)",
+    legendHint: "Pemisahan tugas: eksekusi ⟂ persetujuan ⟂ validasi atribusi ⟂ audit.",
+    roles: {
+      operator: { label: "Operator", desc: "Kerja tangan SOC: simulasi, deteksi, triase, kelola insiden, eksekusi/rollback playbook, jalankan agen LLM, susun draf laporan. Tidak menyetujui aksinya sendiri." },
+      commander: { label: "Commander", desc: "Supervisi & admin: menyetujui approval SOAR + break-glass, menyetujui & menjadwalkan laporan, kelola pengguna/aset/aturan. Tidak mengeksekusi playbook." },
+      intel: { label: "Intel", desc: "Threat intel: kelola IoC, impor STIX, pemetaan ATT&CK. Satu-satunya yang boleh memvalidasi hipotesis atribusi." },
+      auditor: { label: "Auditor", desc: "Read-only: baca audit trail, verifikasi hash chain, laporan kepatuhan. Tidak mengubah apa pun." },
+    },
   },
   audit: {
     title: "Audit",
@@ -296,6 +304,14 @@ const en: typeof id = {
     role: "Role",
     mfa: "MFA",
     active: "Active",
+    legend: "4-role model (RBAC)",
+    legendHint: "Separation of duties: execute ⟂ approve ⟂ validate attribution ⟂ audit.",
+    roles: {
+      operator: { label: "Operator", desc: "Hands-on SOC: simulation, detection, triage, incident handling, playbook execution/rollback, run LLM agents, draft reports. Cannot approve its own actions." },
+      commander: { label: "Commander", desc: "Supervision & admin: approve SOAR + break-glass, approve & schedule reports, manage users/assets/rules. Does not execute playbooks." },
+      intel: { label: "Intel", desc: "Threat intel: manage IoCs, STIX import, ATT&CK mapping. The only role that may validate attribution hypotheses." },
+      auditor: { label: "Auditor", desc: "Read-only: read audit trail, verify hash chain, compliance reports. Changes nothing." },
+    },
   },
   audit: {
     title: "Audit",
