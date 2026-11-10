@@ -92,6 +92,11 @@ frontend/        Vue 3 (M2)
 - [x] **M6** — ELANG-1: IsolationForest (implementasi mandiri, tanpa dependensi) dilatih dari
       baseline M3; deteksi anomali jaringan (beaconing C2) dengan **skor + fitur penyebab**
       (z-score terhadap baseline) di detail alert. Terintegrasi ke `/detection/run`.
+      **Gerbang arah anti-FP**: selain skor IF ≥ 0.60, temuan wajib menyimpang ke arah
+      mencurigakan (CV interval/payload lebih rendah, atau volume lebih tinggi) ≥
+      `min_suspicious_z` (5σ). Aktivitas *lebih rendah* dari baseline bukan sinyal C2.
+      Kalibrasi 30 seed×durasi: normal maks ~3.6σ, beaconing min ~10.6σ. Baseline bersih
+      wajib nol temuan (lihat `test_clean_baseline_has_no_false_positive`).
 - [x] **M7** — Insiden + korelasi + case management: model `Incident` + `IncidentNote`,
       mesin korelasi alert->insiden per entitas (host/aset) dengan `correlation_key`
       idempotent, agregasi **teknik ATT&CK** + severity tertinggi, siklus respons
