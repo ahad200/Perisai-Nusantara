@@ -1,10 +1,12 @@
 """Test ELANG-1: IsolationForest + deteksi anomali beaconing + penjelasan fitur (M6)."""
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import select
 
 from app.core.rbac import Role
 from app.detection import detect_anomalies, run_detection, seed_rules
+from app.detection.anomaly import _suspicious_z
 from app.detection.iforest import IsolationForest
 from app.models.alert import Alert
 from app.simulator import seed_assets
@@ -54,8 +56,41 @@ def test_beaconing_flagged_as_anomaly_with_features(db_session):
 def test_normal_baseline_not_overflagged(db_session):
     _prepare(db_session)
     findings = detect_anomalies(db_session)
-    # Beaconing jelas menonjol; tidak membanjiri dengan FP dari trafik normal.
-    assert len(findings) <= 3
+    # Hanya entitas beaconing C2 yang ditandai — nol FP dari trafik normal.
+    assert findings
+    assert {(f.host, f.dst_ip) for f in findings} == {("ws-staff-03", "198.51.100.23")}
+
+
+@pytest.mark.parametrize(
+    ("days", "seed"),
+    [(3, 2), (3, 4), (3, 5), (14, 1337)],  # (14, 1337) = baseline bawaan CLI/demo
+)
+def test_clean_baseline_has_no_false_positive(db_session, days, seed):
+    # Kasus ini dulu memicu FP: entitas normal "pinggir" skor IF > 0.60 karena data
+    # latih kecil (~55 entitas). Baseline murni tanpa serangan wajib nol temuan.
+    seed_assets(db_session, record_audit=False)
+    generate_baseline(db_session, days=days, seed=seed, record_audit=False)
+    assert detect_anomalies(db_session) == []
+
+
+def test_suspicious_z_ignores_lower_activity():
+    stats = [(70.0, 10.0), (1.25, 0.1), (0.8, 0.1), (320.0, 10.0), (60.0, 10.0)]
+    # Aktivitas JAUH lebih rendah dari baseline (z sangat negatif pada volume):
+    # bukan sinyal ancaman C2 -> skor arah mencurigakan rendah.
+    quiet = [20.0, 1.25, 0.8, 200.0, 10.0]
+    assert _suspicious_z(quiet, stats) < 1
+    # Interval & payload sangat teratur (ciri beaconing) -> z mencurigakan tinggi.
+    beacon = [70.0, 0.05, 0.02, 320.0, 60.0]
+    assert _suspicious_z(beacon, stats) >= 5
+    # Volume jauh lebih tinggi juga mencurigakan.
+    burst = [200.0, 1.25, 0.8, 320.0, 60.0]
+    assert _suspicious_z(burst, stats) >= 5
+
+
+def test_finding_exposes_suspicious_z(db_session):
+    _prepare(db_session)
+    top = max(detect_anomalies(db_session), key=lambda f: f.score)
+    assert top.features["suspicious_z"] >= 5
 
 
 def test_no_baseline_no_training(db_session):

@@ -7,6 +7,15 @@ pencilan sehingga diberi skor anomali tinggi.
 
 Setiap alert ML menyertakan **skor** dan **fitur penyebab** (FR-103): fitur dengan
 deviasi (z-score) terbesar dari baseline ditandai sebagai kontributor utama.
+
+Gerbang arah (anti false positive): skor IF saja tidak cukup. Dengan data latih
+kecil (~55 entitas) entitas normal di pinggir distribusi bisa mencapai skor ~0.66,
+sementara IF "jenuh" untuk titik di luar rentang latih sehingga beaconing hanya
+~0.67–0.73 — jaraknya terlalu tipis untuk ambang skor. Maka temuan juga wajib
+menyimpang **ke arah mencurigakan** (lebih teratur/seragam, atau volume lebih
+tinggi) sebesar ≥ ``min_suspicious_z`` sigma. Aktivitas yang *lebih rendah* dari
+baseline bukan sinyal C2. Kalibrasi (30 kombinasi seed × durasi baseline):
+trafik normal maks ~3.6σ, beaconing min ~10.6σ.
 """
 from __future__ import annotations
 
@@ -31,6 +40,9 @@ FEATURE_LABELS = {
     "span_hours": "durasi aktif (jam)",
     "active_hours": "jumlah jam aktif",
 }
+# Arah deviasi yang mencurigakan per fitur (+1 = lebih tinggi, -1 = lebih rendah).
+# Beaconing: interval & ukuran payload sangat teratur (CV rendah); volume tinggi.
+SUSPICIOUS_DIRECTION = (+1, -1, -1, +1, +1)
 
 
 @dataclass(slots=True)
@@ -106,6 +118,16 @@ def _explain(vector: list[float], stats: list[tuple[float, float]]) -> list[dict
     return feats
 
 
+def _suspicious_z(vector: Sequence[float], stats: list[tuple[float, float]]) -> float:
+    """Deviasi terbesar (dalam sigma) ke arah mencurigakan; negatif bila tak ada."""
+    best = float("-inf")
+    for i, direction in enumerate(SUSPICIOUS_DIRECTION):
+        mean, sd = stats[i]
+        if sd > 0:
+            best = max(best, direction * (vector[i] - mean) / sd)
+    return best if best != float("-inf") else 0.0
+
+
 @dataclass(slots=True)
 class AnomalyFinding:
     host: str | None
@@ -120,7 +142,12 @@ class AnomalyFinding:
 
 
 def detect_anomalies(
-    db: Session, *, threshold: float = 0.60, min_count: int = 12, seed: int = 1337
+    db: Session,
+    *,
+    threshold: float = 0.60,
+    min_count: int = 12,
+    min_suspicious_z: float = 5.0,
+    seed: int = 1337,
 ) -> list[AnomalyFinding]:
     """Latih dari baseline, skor semua entitas jaringan, kembalikan temuan anomali."""
     net_events = db.execute(
@@ -145,6 +172,9 @@ def detect_anomalies(
         score = model.score(ent.vector)
         if score < threshold:
             continue
+        susp_z = _suspicious_z(ent.vector, stats)
+        if susp_z < min_suspicious_z:  # pencilan statistik, tapi bukan pola ancaman
+            continue
         feats = _explain(ent.vector, stats)
         # Tanda tangan beaconing: payload sangat seragam (ciri terkuat), dengan
         # interval cukup teratur. Tahan terhadap beberapa gelombang beaconing.
@@ -161,6 +191,7 @@ def detect_anomalies(
                 "dst_ip": dst,
                 "features": feats,
                 "top": [f["name"] for f in feats[:3]],
+                "suspicious_z": round(susp_z, 2),
                 "model": "IsolationForest (ELANG-1)",
             },
         ))
