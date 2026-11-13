@@ -72,8 +72,9 @@ function countOf(it: NavItem): number | null {
     </div>
 
     <nav class="flex-1 overflow-y-auto py-2" aria-label="Navigasi utama">
-      <div v-for="g in groups" :key="g.label" class="mb-2">
-        <div class="px-4 pb-1 pt-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-dim">
+      <div v-for="(g, gi) in groups" :key="g.label" class="mb-2" :class="gi > 0 ? 'border-t border-edge pt-1' : ''">
+        <div class="flex items-center gap-2 px-4 pb-1 pt-2 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-ink">
+          <span class="h-3 w-0.5 bg-accent" aria-hidden="true" />
           {{ g.label }}
         </div>
         <RouterLink
