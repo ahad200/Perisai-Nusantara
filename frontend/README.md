@@ -1,21 +1,31 @@
-# PN-X Frontend (M2)
+# PN-X Frontend
 
-Konsol SOC — Vue 3 + Vite + TypeScript + Pinia + vue-router + vue-i18n + Tailwind.
-Mengikuti **PRD Lampiran C** (tema grafit gelap, IBM Plex, warna severity hanya untuk
-severity, tanpa pola anti-slop C.5).
+Konsol SOC: Vue 3 + Vite + TypeScript + Pinia + vue-router + vue-i18n + Tailwind.
+Mengikuti **PRD Lampiran C**: tema grafit gelap, IBM Plex Sans/Mono, warna severity hanya
+untuk severity, tanpa pola anti-slop (C.5).
+
+> **Juri/penguji di Windows:** cukup ikuti [README utama](../README.md#menjalankan-di-windows-untuk-juri--penguji)
+> (`setup-windows.bat` lalu `start-windows.bat`). Bagian di bawah untuk pengembang.
 
 ## Jalankan (dev)
-
-Backend M1 harus hidup lebih dulu (mis. `docker compose up` di root → API :8000).
+Backend harus hidup lebih dulu di `:8000` (lihat README utama).
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev        # http://localhost:5173  (proxy /api -> :8000)
+npm run dev -- --host   # juga bisa diakses dari perangkat lain di LAN
 ```
 
-Login dengan user demo (jalankan seed backend): username = nama role, password `ChangeMe123!`.
-Contoh: `platform_admin`, `auditor`, `analyst_t1`.
+Login dengan akun demo (diisi oleh `python -m app.demo` di backend). Password semua akun
+`ChangeMe123!`:
+
+| Username | Role |
+|---|---|
+| `operator` | Analis SOC: triase, insiden, eksekusi playbook, simulator, agen AI |
+| `commander` | Supervisi: approval SOAR, laporan, pengguna, audit |
+| `intel` | Threat intel + validasi atribusi |
+| `auditor` | Read-only: audit + verifikasi hash chain |
 
 ## Skrip
 | Perintah | Fungsi |
@@ -25,27 +35,22 @@ Contoh: `platform_admin`, `auditor`, `analyst_t1`.
 | `npm run preview` | Pratinjau hasil build |
 | `npm run typecheck` | Pengecekan tipe saja |
 
-## Yang sudah ada (M2)
-- **Design tokens** (CSS variables) + Tailwind, tema gelap/terang, IBM Plex Sans/Mono.
-- **Komponen dasar**: Button, SeverityBadge, StatusBadge, Panel, TextInput, Modal,
-  DataTable, SkeletonRow, EmptyState, AppClock (WIB/UTC).
-- **Halaman `/dev/components`** — galeri semua komponen + state (C.6).
-- **Layout aplikasi**: sidebar (menu menyesuaikan role), header (jam WIB/UTC, toggle
-  tema & bahasa, sign out).
-- **Login + MFA (TOTP)** dua langkah, JWT disimpan di localStorage.
-- **i18n** id/en.
-- Halaman contoh terhubung API nyata: **Pengguna** (`GET /users`) & **Audit**
-  (`GET /audit` + tombol verifikasi hash chain), lengkap dengan state loading/empty/error.
+## Halaman
+Situasi (COP + peta segmen per host), Antrian Alert (shortcut `j`/`k`/`a`/`e`/`x`), Insiden
+(detail + alur OODA + Analisis AI), SOAR (approval, run, rollback, break-glass), Aset, Event
+(+ pemicu simulator), Threat Intel, Coverage ATT&CK, Eksekutif, Laporan, Pengguna, Audit, dan
+`/dev/components` (galeri komponen, hanya mode dev).
 
 ## Struktur
 ```
 src/
-  components/ui/       komponen dasar
-  components/layout/   sidebar, header, layout
-  views/               halaman (login, situasi, pengguna, audit, /dev/components)
+  components/ui/       komponen dasar (badge, panel, tabel, modal, OodaFlow, SegmentMap, BrandMark, ...)
+  components/layout/   sidebar berkelompok, command bar (postur + antrian), layout
+  views/               halaman
   stores/auth.ts       Pinia: login, MFA, sesi
-  lib/                 api client, rbac mirror, waktu, tema
+  lib/                 api client, rbac mirror, waktu, tema, opsStatus, tipe API
   i18n/                id/en
   router/              rute + guard auth & permission
   style.css            design tokens + Tailwind
+public/brand/          lambang (varian gelap/terang) + favicon
 ```

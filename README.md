@@ -3,6 +3,9 @@
 Prototipe **platform pertahanan siber adaptif** (SOC + SOAR + multi-agent MATA ELANG).
 Dokumen produk: [`docs/PRD-PN-X-v1.2.md`](docs/PRD-PN-X-v1.2.md).
 
+> **Proyek independen** untuk keperluan kompetisi/riset, **bukan produk resmi TNI**.
+> Konteks militer dipakai sebagai skenario rancangan.
+>
 > Murni **defensif**, berjalan dengan **data simulasi**. Operasi ofensif/hack-back di luar
 > ruang lingkup (PRD §4.2). Semua adapter perangkat nyata diwakili **mock**. Tidak ada
 > panggilan ke layanan eksternal, dan agen AI memakai stub LLM offline secara default.
@@ -23,8 +26,8 @@ paket Python & npm). Setelah itu aplikasi berjalan sepenuhnya offline.
 
 ### 2. Unduh kode
 ```bat
-git clone <URL-repo-ini>
-cd perisai-nusantara
+git clone https://github.com/ahad200/Perisai-Nusantara.git
+cd Perisai-Nusantara
 ```
 
 ### 3. Setup (sekali saja, ±3–5 menit)

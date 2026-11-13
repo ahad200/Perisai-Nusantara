@@ -51,7 +51,7 @@ function signOut() {
   <header class="shrink-0 border-b border-edge bg-graphite-surface">
     <!-- Strip klasifikasi: netral (warna disimpan untuk severity). -->
     <div class="flex h-5 items-center justify-center border-b border-edge bg-graphite-raised font-mono text-[11px] tracking-[0.2em] text-ink-muted">
-      RAHASIA · DATA SIMULASI · LINGKUNGAN PENGEMBANGAN
+      PROTOTIPE · DATA SIMULASI · BUKAN SISTEM RESMI
     </div>
 
     <div class="flex h-12 items-center justify-between gap-4 px-4">

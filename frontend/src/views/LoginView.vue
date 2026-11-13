@@ -51,7 +51,7 @@ async function submitMfa() {
 <template>
   <div class="flex h-full flex-col">
     <div class="flex h-5 shrink-0 items-center justify-center border-b border-edge bg-graphite-raised font-mono text-[11px] tracking-[0.2em] text-ink-muted">
-      RAHASIA · DATA SIMULASI · LINGKUNGAN PENGEMBANGAN
+      PROTOTIPE · DATA SIMULASI · BUKAN SISTEM RESMI
     </div>
   <div class="flex flex-1 items-center justify-center p-4">
     <div class="w-full max-w-sm">

@@ -7,7 +7,8 @@
 | Nama Sistem Bot | MATA ELANG (Multi-Agent Threat Intelligence & Autonomous Response) |
 | Versi Dokumen | **1.2** |
 | Pemilik Produk | Ketua Tim Cyber (Cyber Commander) |
-| Klasifikasi | RAHASIA (Internal Use Only) |
+| Klasifikasi | Tidak rahasia — dokumen prototipe (seluruh data simulasi) |
+| Afiliasi | Proyek independen; **bukan** dokumen atau produk resmi TNI |
 | Target Rilis MVP | 6 bulan setelah F0 selesai (lihat §13) |
 | Target Rilis Full | 18 bulan |
 | Status | Draft — Menunggu Persetujuan |
