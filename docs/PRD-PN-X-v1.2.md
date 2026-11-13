@@ -34,6 +34,7 @@
 | 14 | Bagian baru **Lampiran C: Panduan Desain Frontend** (arah visual, layar utama, larangan anti-pola) | Supaya UI dirancang untuk kerja analis SOC, bukan tampilan generik |
 | 15 | **(v1.2)** Milestone A.3 disusun ulang menjadi M1–M10 dengan kolom dependensi | Di v1.1 frontend baru dibuat di M7 padahal M1–M6 butuh UI untuk demo; IoC baru dibuat di M8 padahal dipakai deteksi (M3), korelasi (M5), dan playbook (M6); baseline 14 hari untuk ELANG-1 tidak pernah disiapkan; seluruh model data dibuat di M1 sebelum dibutuhkan |
 | 16 | **(v1.2)** Aturan timeout di §7 diperjelas | Sel High × K2 ("timeout → AUTO") bertentangan dengan aturan umum "timeout → eskalasi" |
+| 17 | **(v1.2, M11)** Tambah **FR-308 Alur investigasi OODA** per insiden dan **FR-606 Peta segmen per host** di layar Situasi; C.3 diperbarui | Analis butuh satu pandangan "sampai mana penanganan insiden ini & apa yang menahannya" (approval tertunda, atribusi belum divalidasi), dan peta segmen tingkat segmen saja tidak menunjukkan host mana yang terdampak |
 
 ---
 
@@ -287,6 +288,7 @@ Bagian ini menyelesaikan konflik di v1.0. Keputusan "otomatis atau perlu approva
 | FR-305 | Adapter eksekusi (OpenC2 + API vendor) dengan antarmuka standar | P1 | Adapter baru bisa ditambahkan tanpa mengubah core SOAR |
 | FR-306 | Mode dry-run/simulasi playbook | P0 | Playbook bisa dijalankan tanpa efek nyata untuk pengujian |
 | FR-307 | Manajemen kasus (case management) | P0 | Insiden punya status, assignee, timeline, catatan, artefak |
+| FR-308 | **Alur investigasi OODA** per insiden (Observe → Orient → Decide → Act) | P1 | Disusun **read-only & deterministik** dari data tercatat: Observe = alert; Orient = teknik ATT&CK, kritikalitas aset (kosong → K1), hipotesis atribusi; Decide = keputusan Matriks Otonomi + approval; Act = hasil aksi + status contained/closed. Tiap fase berstatus *kosong / tercatat / menunggu* dengan alasan (mis. approval tertunda, hipotesis belum divalidasi). Fase berjalan ditandai. Tanpa LLM, tanpa adapter, tanpa menulis audit. Endpoint `GET /incidents/{id}/ooda` (izin `incident:read`) |
 
 ### 8.4 Agen AI (FR-4xx)
 | ID | Requirement | Prioritas | Acceptance Criteria |
@@ -313,6 +315,7 @@ Bagian ini menyelesaikan konflik di v1.0. Keputusan "otomatis atau perlu approva
 | FR-603 | Dashboard eksekutif | P0 | Menampilkan postur, insiden aktif, MTTD/MTTR, tren |
 | FR-604 | Laporan kepatuhan (ISO 27001, NIST CSF 2.0, regulasi nasional di §17) | P1 | Pemetaan kontrol → bukti dari platform |
 | FR-605 | Penyimpanan bukti forensik dengan chain-of-custody | P1 | Setiap artefak punya hash, pencatat, waktu, dan riwayat akses |
+| FR-606 | **Peta segmen jaringan per host** di Situasi (COP) | P1 | Satu kolom per segmen, diurutkan dari kritikalitas tertinggi **berdasarkan data** (bukan daftar nama segmen hardcode); satu baris per host (hostname, IP, K1/K2/K3, severity insiden aktif). Kritikalitas kosong dihitung K1. Warna hanya untuk severity (C.1). Klik host berinsiden membuka detail insidennya. Tanpa peta geografis/garis serangan beranimasi (C.5) |
 
 ### 8.7 Platform & Akses (FR-7xx)
 | ID | Requirement | Prioritas | Acceptance Criteria |
@@ -584,8 +587,9 @@ perisai-nusantara/
 | M8 | **SOAR**: model `Playbook`, `PlaybookRun`, `Approval`; playbook YAML, **Matriks Otonomi**, approval + timeout + eskalasi, notifikasi in-app, rollback, mock adapter, dry-run + **halaman approval & eksekusi playbook** | M7 | Skenario ransomware di aset K3 terisolasi otomatis, di K1 menunggu approval Commander. Rollback berfungsi |
 | M9 | **Situasi & pelaporan**: dashboard Situasi (COP), dashboard eksekutif, coverage map ATT&CK, halaman audit, ELANG-6 laporan template (PDF), laporan terjadwal | M8 | Common operating picture lengkap. Laporan insiden PDF. Verifikasi audit lewat UI |
 | M10 | **(F2) Agen LLM**: Ollama lokal, ELANG-2/3/6 dengan kontrol §11, model `AttributionHypothesis` | M9 | Ringkasan insiden & hipotesis atribusi + confidence, tervalidasi skema, tahan uji prompt injection dasar |
+| M11 | **Peningkatan layar investigasi**: alur OODA di detail insiden (FR-308) + peta segmen per host di Situasi (FR-606), komponen `OodaFlow` & `SegmentMap` di `/dev/components`. Tanpa tabel baru | M10 | Insiden ransomware di K1 menampilkan fase Decide "menunggu approval"; di K3 aksi auto tampil di fase Act. Klik host bertanda di peta segmen membuka insidennya |
 
-> M1–M9 = prototipe MVP (F1). M10 = awal F2.
+> M1–M9 = prototipe MVP (F1). M10 = awal F2. M11 = peningkatan UI di atas data M1–M10.
 
 ### A.4 Contoh Format Playbook (YAML)
 ```yaml
@@ -670,9 +674,9 @@ Pengguna utama platform ini adalah analis yang menatap layar 8–12 jam per shif
 ### C.3 Layar Utama & Isinya
 | Layar | Isi Inti | Catatan Desain |
 |---|---|---|
-| **Situasi (Common Operating Picture)** | Postur keseluruhan, jumlah insiden aktif per severity, approval tertunda, kesehatan sumber data, tren 24 jam, peta segmen jaringan | Bagian paling atas menjawab "apakah ada yang butuh tindakan saya sekarang?" |
+| **Situasi (Common Operating Picture)** | Postur keseluruhan, jumlah insiden aktif per severity, approval tertunda, kesehatan sumber data, tren 24 jam, peta segmen jaringan **per host** (FR-606) | Bagian paling atas menjawab "apakah ada yang butuh tindakan saya sekarang?" Peta segmen = kolom segmen urut kritikalitas, baris host; strip/badge severity hanya pada host berinsiden; klik → detail insiden |
 | **Antrian Alert** | Tabel padat: severity, waktu, aset (+K1/K2/K3), aturan, teknik ATT&CK, status | Filter tersimpan, pilih banyak, shortcut `j/k` navigasi, `a` assign, `e` eskalasi, `x` tutup sebagai FP |
-| **Detail Insiden** | Timeline kronologis, alert terkait, aset, IoC, playbook yang berjalan, catatan, hipotesis atribusi | Layout dua kolom: timeline di kiri, konteks di kanan. Event bisa diklik untuk melihat raw data |
+| **Detail Insiden** | Timeline kronologis, alert terkait, aset, IoC, playbook yang berjalan, catatan, hipotesis atribusi, **alur investigasi OODA** (FR-308) | Layout dua kolom: timeline di kiri, konteks di kanan. Event bisa diklik untuk melihat raw data. Alur OODA = 4 fase vertikal, fase berjalan diberi garis aksen, fase "menunggu" menampilkan alasannya; tanpa animasi |
 | **Approval** | Aksi yang diusulkan, aset target + kritikalitas, dasar keputusan matriks, dampak, rollback tersedia, sisa waktu timeout | Hitung mundur jelas. Tombol Setujui/Tolak dengan alasan wajib. Untuk K1, konfirmasi ulang dengan mengetik nama aset |
 | **Playbook & Eksekusi** | Daftar playbook, versi, status CAB, riwayat run, mode dry-run | Langkah playbook ditampilkan sebagai urutan vertikal dengan status per langkah |
 | **Coverage ATT&CK** | Matriks taktik × teknik prioritas, diwarnai berdasarkan tingkat deteksi | Mengikuti tata letak matriks MITRE yang sudah dikenal analis |

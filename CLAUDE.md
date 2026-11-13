@@ -130,6 +130,12 @@ frontend/        Vue 3 (M2)
       pernah** memanggil adapter (§A.5 no.1), severity final tetap dari rule engine.
       Label **Tervalidasi** hanya `intel` (`attribution:validate`). Panel
       "Analisis AI" di detail insiden. Audit aktor=agen.
+- [x] **M11** — Peningkatan layar investigasi (tanpa tabel baru): **alur OODA** per insiden
+      (`app/correlation/ooda.py`, `GET /incidents/{id}/ooda`, FR-308) — read-only, disusun
+      dari alert/teknik/kritikalitas/atribusi/keputusan matriks/approval/aksi, status fase
+      kosong/tercatat/menunggu; **peta segmen per host** di Situasi (FR-606) — urut
+      kritikalitas dari data, kritikalitas kosong = K1, klik host → `/incidents?open=<id>`.
+      Komponen `OodaFlow` & `SegmentMap` (+ contoh di `/dev/components`).
 
 ## Menjalankan
 ```bash
