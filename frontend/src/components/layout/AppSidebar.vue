@@ -6,6 +6,7 @@ import { computed } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import type { Permission } from "@/lib/rbac";
 import { useOpsStatus } from "@/lib/opsStatus";
+import BrandMark from "@/components/ui/BrandMark.vue";
 
 type CountKey = "open_alerts" | "active_incidents" | "pending_approvals";
 
@@ -65,11 +66,14 @@ function countOf(it: NavItem): number | null {
 </script>
 
 <template>
-  <aside class="flex w-56 shrink-0 flex-col border-r border-edge bg-graphite-surface">
-    <div class="border-b border-edge px-4 py-3">
-      <div class="text-sm font-semibold tracking-[0.12em] text-ink">PERISAI NUSANTARA</div>
-      <div class="mt-0.5 font-mono text-[11px] text-ink-dim">PN-X · MATA ELANG · SOC</div>
-    </div>
+  <aside class="flex w-60 shrink-0 flex-col border-r border-edge bg-graphite-surface">
+    <RouterLink to="/" class="flex items-center gap-2.5 border-b border-edge px-3 py-3" title="Situasi">
+      <BrandMark :size="30" />
+      <div>
+        <div class="whitespace-nowrap text-sm font-semibold leading-tight tracking-[0.06em] text-ink">PERISAI NUSANTARA</div>
+        <div class="mt-0.5 font-mono text-[11px] text-ink-dim">PN-X · MATA ELANG · SOC</div>
+      </div>
+    </RouterLink>
 
     <nav class="flex-1 overflow-y-auto py-2" aria-label="Navigasi utama">
       <div v-for="(g, gi) in groups" :key="g.label" class="mb-2" :class="gi > 0 ? 'border-t border-edge pt-1' : ''">

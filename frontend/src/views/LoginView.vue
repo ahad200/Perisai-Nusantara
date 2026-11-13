@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import TextInput from "@/components/ui/TextInput.vue";
 import AppButton from "@/components/ui/AppButton.vue";
+import BrandMark from "@/components/ui/BrandMark.vue";
 import { useAuthStore } from "@/stores/auth";
 import { ApiError } from "@/lib/api";
 
@@ -54,9 +55,12 @@ async function submitMfa() {
     </div>
   <div class="flex flex-1 items-center justify-center p-4">
     <div class="w-full max-w-sm">
-      <div class="mb-6 border-l-2 border-accent pl-3">
-        <h1 class="text-xl font-semibold tracking-[0.12em] text-ink">PERISAI NUSANTARA</h1>
-        <p class="font-mono text-xs text-ink-dim">PN-X · MATA ELANG · Konsol SOC</p>
+      <div class="mb-6 flex items-center gap-3">
+        <BrandMark :size="64" />
+        <div class="border-l-2 border-accent pl-3">
+          <h1 class="text-xl font-semibold tracking-[0.12em] text-ink">PERISAI NUSANTARA</h1>
+          <p class="font-mono text-xs text-ink-dim">PN-X · MATA ELANG · Konsol SOC</p>
+        </div>
       </div>
 
       <form

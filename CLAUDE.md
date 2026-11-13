@@ -136,6 +136,11 @@ frontend/        Vue 3 (M2)
       kosong/tercatat/menunggu; **peta segmen per host** di Situasi (FR-606) — urut
       kritikalitas dari data, kritikalitas kosong = K1, klik host → `/incidents?open=<id>`.
       Komponen `OodaFlow` & `SegmentMap` (+ contoh di `/dev/components`).
+- [x] **M12** — Penyegaran kerangka UI (tanpa perubahan backend): tokens C.2 (grafit
+      `#0B0E12/#11151A/#181D24`, aksen **hijau zaitun** `#9CB36B`, kontras ≥ AA);
+      **command bar** (FR-705: strip klasifikasi, postur, hitungan antrian, sinkron 60 dtk via
+      `lib/opsStatus.ts`); sidebar berkelompok + hitungan + status API; **lambang** (FR-706:
+      `BrandMark.vue`, `public/brand/` varian gelap/terang + favicon) hanya di login & sidebar.
 
 ## Menjalankan
 ```bash

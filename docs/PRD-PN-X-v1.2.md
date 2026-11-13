@@ -35,6 +35,7 @@
 | 15 | **(v1.2)** Milestone A.3 disusun ulang menjadi M1–M10 dengan kolom dependensi | Di v1.1 frontend baru dibuat di M7 padahal M1–M6 butuh UI untuk demo; IoC baru dibuat di M8 padahal dipakai deteksi (M3), korelasi (M5), dan playbook (M6); baseline 14 hari untuk ELANG-1 tidak pernah disiapkan; seluruh model data dibuat di M1 sebelum dibutuhkan |
 | 16 | **(v1.2)** Aturan timeout di §7 diperjelas | Sel High × K2 ("timeout → AUTO") bertentangan dengan aturan umum "timeout → eskalasi" |
 | 17 | **(v1.2, M11)** Tambah **FR-308 Alur investigasi OODA** per insiden dan **FR-606 Peta segmen per host** di layar Situasi; C.3 diperbarui | Analis butuh satu pandangan "sampai mana penanganan insiden ini & apa yang menahannya" (approval tertunda, atribusi belum divalidasi), dan peta segmen tingkat segmen saja tidak menunjukkan host mana yang terdampak |
+| 18 | **(v1.2, M12)** Tambah **FR-705 Command bar & status operasional** dan **FR-706 Identitas visual (lambang)**; C.2 diperbarui (grafit lebih dalam, aksen hijau zaitun); C.3 tambah baris "Kerangka aplikasi" | Analis harus melihat postur & antrian yang butuh tindakan dari halaman mana pun, bukan hanya di Situasi; navigasi 12 menu tanpa pengelompokan sulit dipindai; produk belum punya lambang |
 
 ---
 
@@ -324,6 +325,8 @@ Bagian ini menyelesaikan konflik di v1.0. Keputusan "otomatis atau perlu approva
 | FR-702 | Inventaris aset dengan kritikalitas K1/K2/K3 | P0 | Aset tanpa kritikalitas diperlakukan sebagai K1 (fail-safe) |
 | FR-703 | UI bahasa Indonesia & Inggris | P0 | Seluruh teks UI bisa diterjemahkan |
 | FR-704 | API REST untuk integrasi | P0 | Terdokumentasi (OpenAPI) |
+| FR-705 | **Command bar & status operasional** di setiap halaman | P1 | Header menampilkan strip klasifikasi netral, **postur** (KRITIS/WASPADA/SIAGA/NORMAL), hitungan *insiden aktif · approval tertunda · alert terbuka* (dapat diklik ke halamannya), waktu sinkron terakhir, jam WIB/UTC. Diperbarui berkala (60 dtk) **tanpa animasi/kedipan**. Sidebar dikelompokkan *Operasi / Data / Analisis / Administrasi* sesuai RBAC (grup kosong disembunyikan), hitungan antrian di menu terkait, status API + versi di kaki sidebar. Sumber data: `GET /dashboard/situasi` & `GET /health` (tanpa endpoint baru) |
+| FR-706 | **Identitas visual (lambang PN-X)** | P2 | Lambang hanya di identitas produk: halaman login, blok brand sidebar, favicon. Varian mengikuti tema (badan elang terang di tema gelap, asli di tema terang) agar tetap terbaca. Tidak dipakai sebagai hiasan di judul/panel (C.5) |
 
 ---
 
@@ -589,7 +592,9 @@ perisai-nusantara/
 | M10 | **(F2) Agen LLM**: Ollama lokal, ELANG-2/3/6 dengan kontrol §11, model `AttributionHypothesis` | M9 | Ringkasan insiden & hipotesis atribusi + confidence, tervalidasi skema, tahan uji prompt injection dasar |
 | M11 | **Peningkatan layar investigasi**: alur OODA di detail insiden (FR-308) + peta segmen per host di Situasi (FR-606), komponen `OodaFlow` & `SegmentMap` di `/dev/components`. Tanpa tabel baru | M10 | Insiden ransomware di K1 menampilkan fase Decide "menunggu approval"; di K3 aksi auto tampil di fase Act. Klik host bertanda di peta segmen membuka insidennya |
 
-> M1–M9 = prototipe MVP (F1). M10 = awal F2. M11 = peningkatan UI di atas data M1–M10.
+| M12 | **Penyegaran kerangka UI**: design tokens (grafit lebih dalam, aksen hijau zaitun), command bar (FR-705), sidebar berkelompok + status API, lambang PN-X + favicon (FR-706), gaya judul panel konsol. Tanpa perubahan backend | M11 | Dari halaman mana pun, postur & jumlah approval tertunda terlihat dan bisa diklik; lambang terbaca di tema gelap & terang |
+
+> M1–M9 = prototipe MVP (F1). M10 = awal F2. M11–M12 = peningkatan UI di atas data M1–M10.
 
 ### A.4 Contoh Format Playbook (YAML)
 ```yaml
@@ -662,8 +667,8 @@ Pengguna utama platform ini adalah analis yang menatap layar 8–12 jam per shif
 ### C.2 Arah Visual
 | Elemen | Ketentuan |
 |---|---|
-| Tema | **Gelap sebagai default** (ruang SOC redup), tema terang tersedia untuk laporan/cetak. Latar gelap memakai abu-abu grafit kebiruan (mis. `#0F1216`, `#161A20`, `#1E232B`), **bukan hitam pekat** |
-| Warna aksen | Satu aksen saja untuk elemen interaktif/fokus, mis. kuning amber redup atau hijau zaitun. Dipakai hemat |
+| Tema | **Gelap sebagai default** (ruang SOC redup), tema terang tersedia untuk laporan/cetak. Latar gelap memakai abu-abu grafit kebiruan (prototipe: `#0B0E12` / `#11151A` / `#181D24`, border `#232A34`), **bukan hitam pekat** |
+| Warna aksen | Satu aksen saja untuk elemen interaktif/fokus, mis. kuning amber redup atau hijau zaitun. Dipakai hemat. Prototipe memakai **hijau zaitun** `#9CB36B` (tema terang `#5D7330`); kontras teks seluruh token ≥ WCAG AA |
 | Warna severity | Khusus untuk severity, tidak dipakai untuk hal lain: Critical merah, High oranye, Medium kuning, Low biru-abu, Info abu. **Selalu disertai label teks/ikon**, jangan mengandalkan warna saja (aman untuk buta warna) |
 | Tipografi | **IBM Plex Sans** untuk UI, **IBM Plex Mono** untuk IP, hash, IoC, ID, timestamp, dan query. Angka memakai tabular numerals agar kolom rata. Skala ukuran terbatas: 12 / 13 / 14 / 16 / 20 / 24 px |
 | Bentuk | Radius kecil (2–4 px). Pemisah memakai **garis border 1 px**, bukan bayangan. Tanpa gradien |
@@ -674,6 +679,7 @@ Pengguna utama platform ini adalah analis yang menatap layar 8–12 jam per shif
 ### C.3 Layar Utama & Isinya
 | Layar | Isi Inti | Catatan Desain |
 |---|---|---|
+| **Kerangka aplikasi (header & sidebar)** | Strip klasifikasi, postur, hitungan antrian, waktu sinkron, jam WIB/UTC; navigasi berkelompok + hitungan antrian; status API (FR-705); lambang di blok brand (FR-706) | Selalu terlihat di semua halaman. Label grup & judul panel bergaya konsol (mono, kapital, renggang). Warna hanya saat ada yang butuh perhatian (approval tertunda, postur kritis, API terputus) |
 | **Situasi (Common Operating Picture)** | Postur keseluruhan, jumlah insiden aktif per severity, approval tertunda, kesehatan sumber data, tren 24 jam, peta segmen jaringan **per host** (FR-606) | Bagian paling atas menjawab "apakah ada yang butuh tindakan saya sekarang?" Peta segmen = kolom segmen urut kritikalitas, baris host; strip/badge severity hanya pada host berinsiden; klik → detail insiden |
 | **Antrian Alert** | Tabel padat: severity, waktu, aset (+K1/K2/K3), aturan, teknik ATT&CK, status | Filter tersimpan, pilih banyak, shortcut `j/k` navigasi, `a` assign, `e` eskalasi, `x` tutup sebagai FP |
 | **Detail Insiden** | Timeline kronologis, alert terkait, aset, IoC, playbook yang berjalan, catatan, hipotesis atribusi, **alur investigasi OODA** (FR-308) | Layout dua kolom: timeline di kiri, konteks di kanan. Event bisa diklik untuk melihat raw data. Alur OODA = 4 fase vertikal, fase berjalan diberi garis aksen, fase "menunggu" menampilkan alasannya; tanpa animasi |
