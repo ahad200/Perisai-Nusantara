@@ -3,21 +3,23 @@
 @tailwind utilities;
 
 /* === Design tokens (PRD Lampiran C.2) ===
-   Tema gelap default (ruang SOC redup). Grafit kebiruan, bukan hitam pekat.
-   Warna severity HANYA untuk severity. Satu aksen (amber redup) dipakai hemat. */
+   Tema gelap default (ruang SOC redup) bergaya konsol komando: grafit kebiruan
+   yang lebih dalam (tetap BUKAN hitam pekat), garis 1px, tanpa gradien/glow.
+   Warna severity HANYA untuk severity. Satu aksen (hijau zaitun) dipakai hemat.
+   Kontras teks (WCAG AA, C.4): text 13.6+, muted 6.7+, dim 4.6+ di semua latar. */
 :root,
 .dark {
-  --bg-base: #0f1216;
-  --bg-surface: #161a20;
-  --bg-raised: #1e232b;
-  --border: #272d37;
+  --bg-base: #0b0e12;
+  --bg-surface: #11151a;
+  --bg-raised: #181d24;
+  --border: #232a34;
 
-  --text: #e6e9ee;
-  --text-muted: #9aa4b2;
-  --text-dim: #6b7480;
+  --text: #e3e7ec;
+  --text-muted: #9aa4b1;
+  --text-dim: #7d8794;
 
-  --accent: #c9a24a; /* amber redup */
-  --accent-ink: #11140f; /* teks di atas aksen */
+  --accent: #9cb36b; /* hijau zaitun */
+  --accent-ink: #10130b; /* teks di atas aksen */
 
   /* Seri-2 grafik: slate kebiruan — SENGAJA bukan warna severity, agar dua seri
      (alert=aksen, insiden=slate) mudah dibedakan tanpa menyalahgunakan severity. */
@@ -43,7 +45,7 @@
   --text-muted: #51606f;
   --text-dim: #7a8694;
 
-  --accent: #8a6d1f;
+  --accent: #5d7330;
   --accent-ink: #ffffff;
 
   --data-2: #3f5c78;

@@ -8,7 +8,7 @@ defineProps<{ title?: string }>();
       v-if="title || $slots.header"
       class="flex items-center justify-between border-b border-edge px-3 py-2"
     >
-      <h2 class="text-sm font-medium text-ink">
+      <h2 class="font-mono text-xs font-medium uppercase tracking-[0.12em] text-ink-muted">
         <slot name="header">{{ title }}</slot>
       </h2>
       <div v-if="$slots.actions"><slot name="actions" /></div>

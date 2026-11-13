@@ -48,11 +48,15 @@ async function submitMfa() {
 </script>
 
 <template>
-  <div class="flex h-full items-center justify-center p-4">
+  <div class="flex h-full flex-col">
+    <div class="flex h-5 shrink-0 items-center justify-center border-b border-edge bg-graphite-raised font-mono text-[11px] tracking-[0.2em] text-ink-muted">
+      RAHASIA · DATA SIMULASI · LINGKUNGAN PENGEMBANGAN
+    </div>
+  <div class="flex flex-1 items-center justify-center p-4">
     <div class="w-full max-w-sm">
-      <div class="mb-6">
-        <h1 class="text-xl font-semibold text-ink">PERISAI NUSANTARA</h1>
-        <p class="font-mono text-xs text-ink-dim">PN-X · Konsol SOC</p>
+      <div class="mb-6 border-l-2 border-accent pl-3">
+        <h1 class="text-xl font-semibold tracking-[0.12em] text-ink">PERISAI NUSANTARA</h1>
+        <p class="font-mono text-xs text-ink-dim">PN-X · MATA ELANG · Konsol SOC</p>
       </div>
 
       <form
@@ -60,7 +64,7 @@ async function submitMfa() {
         class="space-y-3 rounded border border-edge bg-graphite-surface p-4"
         @submit.prevent="submitCreds"
       >
-        <h2 class="text-sm font-medium text-ink">{{ $t("login.heading") }}</h2>
+        <h2 class="font-mono text-xs font-medium uppercase tracking-[0.12em] text-ink-muted">{{ $t("login.heading") }}</h2>
         <TextInput
           v-model="username"
           :label="$t('login.username')"
@@ -83,7 +87,7 @@ async function submitMfa() {
         class="space-y-3 rounded border border-edge bg-graphite-surface p-4"
         @submit.prevent="submitMfa"
       >
-        <h2 class="text-sm font-medium text-ink">{{ $t("login.otp") }}</h2>
+        <h2 class="font-mono text-xs font-medium uppercase tracking-[0.12em] text-ink-muted">{{ $t("login.otp") }}</h2>
         <p class="text-xs text-ink-muted">{{ $t("login.mfaPrompt") }}</p>
         <TextInput
           v-model="otp"
@@ -97,6 +101,8 @@ async function submitMfa() {
           {{ $t("login.verify") }}
         </AppButton>
       </form>
+      <p class="mt-3 text-xs text-ink-dim">Akses terbatas untuk personel SOC berwenang. Setiap login dicatat di audit (hash chain).</p>
     </div>
+  </div>
   </div>
 </template>

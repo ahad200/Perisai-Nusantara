@@ -11,6 +11,7 @@ import { apiFetch, ApiError } from "@/lib/api";
 import { formatWIB } from "@/lib/time";
 import type { Segment, SegmentHost } from "@/lib/types";
 import { useRouter } from "vue-router";
+import { useOpsStatus } from "@/lib/opsStatus";
 
 type Sev = "critical" | "high" | "medium" | "low";
 interface Trend { hour: string; alerts: number }
@@ -27,6 +28,7 @@ interface Situasi {
   segments: Segment[];
 }
 
+const ops = useOpsStatus();
 const loading = ref(true);
 const error = ref<string | null>(null);
 const data = ref<Situasi | null>(null);
@@ -49,6 +51,7 @@ async function load() {
   error.value = null;
   try {
     data.value = await apiFetch<Situasi>("/dashboard/situasi");
+    ops.refresh(); // samakan angka command bar dengan halaman ini
   } catch (e) {
     error.value = e instanceof ApiError ? e.message : "Gagal memuat situasi";
   } finally {
