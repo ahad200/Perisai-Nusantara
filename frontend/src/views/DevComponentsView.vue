@@ -11,6 +11,9 @@ import Modal from "@/components/ui/Modal.vue";
 import DataTable, { type Column } from "@/components/ui/DataTable.vue";
 import SkeletonRow from "@/components/ui/SkeletonRow.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
+import OodaFlow from "@/components/ui/OodaFlow.vue";
+import SegmentMap from "@/components/ui/SegmentMap.vue";
+import type { Ooda, Segment } from "@/lib/types";
 
 const sampleText = ref("10.14.22.7");
 const otp = ref("");
@@ -29,6 +32,43 @@ const rows = [
   { severity: "medium", host: "ws-anlst-114", ip: "10.20.3.88", technique: "T1110" },
   { severity: "low", host: "print-srv-05", ip: "10.20.7.12", technique: "T1046" },
 ] as const;
+
+// OODA: insiden ransomware di aset K1 — aksi disruptif ditahan menunggu Commander.
+const oodaSample: Ooda = {
+  incident_id: 42, incident_code: "INC-20261113-0042", incident_status: "investigating",
+  severity: "critical", criticality: "K1", current_phase: "decide",
+  phases: [
+    { key: "observe", state: "recorded", waiting_reason: null, items: [
+      { ts: "2026-11-13T01:12:04Z", kind: "alert", ref: "ALERT-311", text: "SIG-T1110-01 · Brute force SSH ke cmd-core-01 (48 event)", status: "new", severity: "high" },
+      { ts: "2026-11-13T01:27:40Z", kind: "alert", ref: "ALERT-318", text: "SIG-T1486-01 · Rename massal ekstensi .lockbit (212 event)", status: "new", severity: "critical" },
+    ] },
+    { key: "orient", state: "waiting", waiting_reason: "1 hipotesis atribusi belum divalidasi intel", items: [
+      { ts: null, kind: "technique", ref: "T1110", text: "T1110 · Brute Force", status: null, severity: null },
+      { ts: null, kind: "technique", ref: "T1486", text: "T1486 · Data Encrypted for Impact", status: null, severity: null },
+      { ts: null, kind: "criticality", ref: "ASSET-1", text: "Kritikalitas aset cmd-core-01: K1", status: "K1", severity: null },
+      { ts: "2026-11-13T01:31:02Z", kind: "attribution", ref: "HYP-7", text: "Hipotesis ELANG-3: kelompok ransomware-as-a-service (confidence low)", status: "proposed", severity: null },
+    ] },
+    { key: "decide", state: "waiting", waiting_reason: "1 approval menunggu keputusan", items: [
+      { ts: "2026-11-13T01:33:10Z", kind: "decision", ref: "RUN-9/0", text: "PB-RANSOM · isolate_host: approval — Critical × K1: aksi disruptif wajib approval Commander", status: "approval", severity: null },
+      { ts: "2026-11-13T01:33:10Z", kind: "approval", ref: "APR-15", text: "Approval isolate_host (critical×K1) → commander: pending", status: "pending", severity: null },
+    ] },
+    { key: "act", state: "waiting", waiting_reason: "1 aksi ditahan menunggu approval", items: [] },
+  ],
+};
+
+const segmentSample: Segment[] = [
+  { segment: "komando", assets: 1, K1: 1, K2: 0, K3: 0, active_incidents: 1, max_severity: "critical", max_criticality: "K1", hosts: [
+    { asset_id: 1, hostname: "cmd-core-01", ip: "10.10.1.10", criticality: "K1", active_incidents: 1, max_severity: "critical", incident_id: 42 },
+  ] },
+  { segment: "aplikasi", assets: 2, K1: 0, K2: 2, K3: 0, active_incidents: 0, max_severity: null, max_criticality: "K2", hosts: [
+    { asset_id: 3, hostname: "app-logistik-01", ip: "10.10.2.20", criticality: "K2", active_incidents: 0, max_severity: null, incident_id: null },
+    { asset_id: 5, hostname: "db-pendukung-01", ip: "10.10.2.22", criticality: "K2", active_incidents: 0, max_severity: null, incident_id: null },
+  ] },
+  { segment: "pengguna", assets: 2, K1: 0, K2: 0, K3: 2, active_incidents: 1, max_severity: "high", max_criticality: "K3", hosts: [
+    { asset_id: 8, hostname: "ws-staff-03", ip: "10.10.3.33", criticality: "K3", active_incidents: 1, max_severity: "high", incident_id: 40 },
+    { asset_id: 9, hostname: "ws-staff-04", ip: "10.10.3.34", criticality: "K3", active_incidents: 0, max_severity: null, incident_id: null },
+  ] },
+];
 </script>
 
 <template>
@@ -115,6 +155,14 @@ const rows = [
           <SeverityBadge :severity="value as 'critical' | 'high' | 'medium' | 'low' | 'info'" />
         </template>
       </DataTable>
+    </Panel>
+
+    <Panel title="Alur investigasi OODA (fase berjalan = garis aksen; menunggu = kuning)">
+      <OodaFlow :data="oodaSample" />
+    </Panel>
+
+    <Panel title="Peta segmen (kolom = segmen urut kritikalitas, baris = host; warna = severity insiden)">
+      <SegmentMap :segments="segmentSample" />
     </Panel>
 
     <div class="grid gap-4 md:grid-cols-2">

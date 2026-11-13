@@ -74,3 +74,30 @@ class StatusRequest(BaseModel):
 
 class AddNoteRequest(BaseModel):
     body: str = Field(min_length=1, max_length=2048)
+
+
+# --- Alur investigasi OODA (read-only, disusun dari data tercatat) ---
+class OodaItem(BaseModel):
+    ts: datetime | None
+    kind: Literal["alert", "technique", "criticality", "attribution", "decision", "approval", "action", "status"]
+    ref: str
+    text: str
+    status: str | None = None
+    severity: str | None = None
+
+
+class OodaPhase(BaseModel):
+    key: Literal["observe", "orient", "decide", "act"]
+    state: Literal["empty", "recorded", "waiting"]
+    waiting_reason: str | None = None
+    items: list[OodaItem] = []
+
+
+class OodaOut(BaseModel):
+    incident_id: int
+    incident_code: str
+    incident_status: str
+    severity: str
+    criticality: str
+    current_phase: Literal["observe", "orient", "decide", "act", "closed"]
+    phases: list[OodaPhase]

@@ -10,6 +10,7 @@ from app.api.deps import require_permission
 from app.core.database import get_db
 from app.core.rbac import Permission
 from app.correlation import correlate
+from app.correlation.ooda import build_ooda
 from app.models.alert import Alert, AlertStatus
 from app.models.detection import SEVERITY_RANK
 from app.models.incident import (
@@ -29,6 +30,7 @@ from app.schemas.incident import (
     IncidentOut,
     IncidentPage,
     NoteOut,
+    OodaOut,
     StatusRequest,
 )
 
@@ -121,6 +123,16 @@ def get_incident(
     ).scalars().all()
     out.notes = [NoteOut.model_validate(n) for n in notes]
     return out
+
+
+@router.get("/{incident_id}/ooda", response_model=OodaOut)
+def get_incident_ooda(
+    incident_id: int,
+    _: User = Depends(require_permission(Permission.INCIDENT_READ)),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Alur investigasi OODA (read-only): Observe/Orient/Decide/Act dari data tercatat."""
+    return build_ooda(db, _get(db, incident_id))
 
 
 @router.post("/{incident_id}/assign", response_model=IncidentOut)

@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.alert import Alert, AlertStatus
-from app.models.asset import Asset
+from app.models.asset import Asset, resolve_criticality
 from app.models.detection import SEVERITY_RANK
 from app.models.event import Event
 from app.models.incident import Incident, IncidentStatus, OPEN_INCIDENT_STATUSES
@@ -152,46 +152,63 @@ def _data_source_health(db: Session, *, now: datetime) -> list[dict]:
     return out
 
 
-def _segment_map(db: Session) -> list[dict]:
-    """Peta segmen jaringan: aset per segmen + kritikalitas + insiden aktif."""
-    asset_rows = db.execute(
-        select(Asset.segment, Asset.criticality, func.count(Asset.id)).group_by(
-            Asset.segment, Asset.criticality
-        )
-    ).all()
-    seg: dict[str, dict] = {}
-    for segment, crit, n in asset_rows:
-        s = seg.setdefault(segment or "(tak tersegmen)", {"assets": 0, "K1": 0, "K2": 0, "K3": 0})
-        s["assets"] += int(n)
-        if crit in ("K1", "K2", "K3"):
-            s[crit] += int(n)
+_CRIT_RANK = {"K1": 3, "K2": 2, "K3": 1}
 
-    # Insiden aktif per segmen (lewat aset).
+
+def _segment_map(db: Session) -> list[dict]:
+    """Peta segmen jaringan: aset per segmen + kritikalitas + insiden aktif + host.
+
+    Segmen diurutkan dari kritikalitas tertinggi (segmen ber-K1 dulu), lalu nama —
+    berbasis data, bukan daftar nama segmen yang di-hardcode. Kritikalitas kosong
+    diperlakukan K1 (fail-safe, §A.5 no.6).
+    """
+    seg: dict[str, dict] = {}
+    host_idx: dict[int, dict] = {}
+
+    def _seg(name: str | None) -> dict:
+        return seg.setdefault(name or "(tak tersegmen)", {
+            "assets": 0, "K1": 0, "K2": 0, "K3": 0,
+            "active_incidents": 0, "max_severity": None, "hosts": [],
+        })
+
+    for a in db.execute(select(Asset).order_by(Asset.hostname.asc())).scalars().all():
+        crit = resolve_criticality(a.criticality).value
+        s = _seg(a.segment)
+        s["assets"] += 1
+        s[crit] += 1
+        h = {
+            "asset_id": a.id, "hostname": a.hostname, "ip": a.ip, "criticality": crit,
+            "active_incidents": 0, "max_severity": None, "incident_id": None,
+        }
+        s["hosts"].append(h)
+        host_idx[a.id] = h
+
+    # Insiden aktif per segmen & host (lewat aset).
     inc_rows = db.execute(
-        select(Asset.segment, Incident.severity)
+        select(Asset.id, Asset.segment, Incident.id, Incident.severity)
         .join(Incident, Incident.asset_id == Asset.id)
         .where(Incident.status.in_(tuple(OPEN_INCIDENT_STATUSES)))
     ).all()
-    for segment, sev in inc_rows:
-        s = seg.setdefault(segment or "(tak tersegmen)", {"assets": 0, "K1": 0, "K2": 0, "K3": 0})
-        s.setdefault("active_incidents", 0)
-        s["active_incidents"] += 1
-        cur = s.get("max_severity")
-        if cur is None or SEVERITY_RANK.get(sev, 0) > SEVERITY_RANK.get(cur, 0):
-            s["max_severity"] = sev
+    for asset_id, segment, inc_id, sev in inc_rows:
+        for target in (_seg(segment), host_idx.get(asset_id)):
+            if target is None:
+                continue
+            target["active_incidents"] += 1
+            cur = target["max_severity"]
+            if cur is None or SEVERITY_RANK.get(sev, 0) > SEVERITY_RANK.get(cur, 0):
+                target["max_severity"] = sev
+                if "incident_id" in target:
+                    target["incident_id"] = inc_id  # insiden paling parah di host
 
-    return [
-        {
-            "segment": name,
-            "assets": v["assets"],
-            "K1": v["K1"],
-            "K2": v["K2"],
-            "K3": v["K3"],
-            "active_incidents": v.get("active_incidents", 0),
-            "max_severity": v.get("max_severity"),
-        }
-        for name, v in sorted(seg.items())
+    def _seg_crit(v: dict) -> str:
+        return next((k for k in ("K1", "K2", "K3") if v[k]), "K3")
+
+    out = [
+        {"segment": name, **v, "max_criticality": _seg_crit(v)}
+        for name, v in seg.items()
     ]
+    out.sort(key=lambda r: (-_CRIT_RANK[r["max_criticality"]], r["segment"]))
+    return out
 
 
 # --------------------------------------------------------------------------- #

@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted } from "vue";
 
 const open = defineModel<boolean>("open", { required: true });
-defineProps<{ title?: string }>();
+withDefaults(defineProps<{ title?: string; size?: "md" | "lg" }>(), { size: "md" });
 
 function onKey(e: KeyboardEvent) {
   if (e.key === "Escape") open.value = false;
@@ -21,7 +21,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
       <div
         role="dialog"
         aria-modal="true"
-        class="w-full max-w-md rounded border border-edge bg-graphite-surface shadow-xl"
+        class="flex max-h-[90vh] w-full flex-col rounded border border-edge bg-graphite-surface shadow-xl"
+        :class="size === 'lg' ? 'max-w-3xl' : 'max-w-md'"
       >
         <header
           v-if="title || $slots.header"
@@ -29,7 +30,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         >
           <slot name="header">{{ title }}</slot>
         </header>
-        <div class="p-3 text-sm text-ink"><slot /></div>
+        <div class="overflow-auto p-3 text-sm text-ink"><slot /></div>
         <footer
           v-if="$slots.footer"
           class="flex justify-end gap-2 border-t border-edge px-3 py-2"

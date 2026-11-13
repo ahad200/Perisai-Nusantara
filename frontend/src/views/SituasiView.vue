@@ -3,17 +3,18 @@ import { computed, onMounted, ref } from "vue";
 import Panel from "@/components/ui/Panel.vue";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import SeverityBadge from "@/components/ui/SeverityBadge.vue";
-import CritBadge from "@/components/ui/CritBadge.vue";
+import SegmentMap from "@/components/ui/SegmentMap.vue";
 import SkeletonRow from "@/components/ui/SkeletonRow.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import { apiFetch, ApiError } from "@/lib/api";
 import { formatWIB } from "@/lib/time";
+import type { Segment, SegmentHost } from "@/lib/types";
+import { useRouter } from "vue-router";
 
 type Sev = "critical" | "high" | "medium" | "low";
 interface Trend { hour: string; alerts: number }
 interface Source { source: string; events: number; last_event_at: string | null; lag_hours: number | null; status: string }
-interface Segment { segment: string; assets: number; K1: number; K2: number; K3: number; active_incidents: number; max_severity: string | null }
 interface Situasi {
   generated_at: string;
   posture: "critical" | "elevated" | "guarded" | "normal";
@@ -54,6 +55,11 @@ async function load() {
     loading.value = false;
   }
 }
+const router = useRouter();
+function openIncident(h: SegmentHost) {
+  if (h.incident_id) router.push({ path: "/incidents", query: { open: String(h.incident_id) } });
+}
+
 onMounted(load);
 </script>
 
@@ -163,29 +169,12 @@ onMounted(load);
         </Panel>
       </div>
 
-      <!-- Peta segmen jaringan -->
+      <!-- Peta segmen jaringan: kolom = segmen (urut kritikalitas), baris = host -->
       <Panel title="Peta segmen jaringan">
-        <div v-if="data.segments.length" class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <div
-            v-for="seg in data.segments"
-            :key="seg.segment"
-            class="rounded border bg-graphite-raised p-3 transition-colors hover:border-ink-dim"
-            :class="seg.active_incidents ? 'border-sev-medium/50' : 'border-edge'"
-          >
-            <div class="flex items-center justify-between">
-              <span class="font-mono text-sm text-ink">{{ seg.segment }}</span>
-              <SeverityBadge v-if="seg.max_severity" :severity="(seg.max_severity as Sev)" />
-            </div>
-            <div class="mt-2 flex items-center gap-2 text-xs text-ink-dim">
-              <span>{{ seg.assets }} aset</span>
-              <CritBadge v-if="seg.K1" level="K1" />
-              <span v-if="seg.K1" class="text-ink-muted">×{{ seg.K1 }}</span>
-            </div>
-            <div class="mt-1 text-xs" :class="seg.active_incidents ? 'text-sev-medium' : 'text-ink-dim'">
-              {{ seg.active_incidents }} insiden aktif
-            </div>
-          </div>
-        </div>
+        <template #actions>
+          <span class="text-xs text-ink-dim">urut kritikalitas · klik host bertanda untuk membuka insiden</span>
+        </template>
+        <SegmentMap v-if="data.segments.length" :segments="data.segments" @open-incident="openIncident" />
         <EmptyState v-else message="Belum ada aset tersegmen" />
       </Panel>
     </template>

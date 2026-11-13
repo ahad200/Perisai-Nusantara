@@ -7,6 +7,9 @@ import SeverityBadge from "@/components/ui/SeverityBadge.vue";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import AppButton from "@/components/ui/AppButton.vue";
 import Modal from "@/components/ui/Modal.vue";
+import OodaFlow from "@/components/ui/OodaFlow.vue";
+import type { Ooda } from "@/lib/types";
+import { useRoute, useRouter } from "vue-router";
 import { apiFetch, ApiError } from "@/lib/api";
 import { formatWIB } from "@/lib/time";
 import { useAuthStore } from "@/stores/auth";
@@ -129,6 +132,7 @@ async function runCorrelate() {
 
 // --- Detail + case management ---
 const detail = ref<IncidentDetail | null>(null);
+const ooda = ref<Ooda | null>(null);
 const detailOpen = ref(false);
 const noteBody = ref("");
 const statusDraft = ref("");
@@ -140,13 +144,27 @@ async function openDetail(id: number) {
   aiSummary.value = null;
   aiHunt.value = null;
   attributions.value = [];
+  ooda.value = null;
   detail.value = await apiFetch<IncidentDetail>(`/incidents/${id}`);
   statusDraft.value = detail.value.status;
   loadAttributions(id);
+  loadOoda(id);
+}
+
+// Alur OODA (read-only) — dimuat ulang setiap ada perubahan state di detail.
+async function loadOoda(id: number) {
+  try {
+    ooda.value = await apiFetch<Ooda>(`/incidents/${id}/ooda`);
+  } catch {
+    ooda.value = null;
+  }
 }
 
 async function refreshDetail() {
-  if (detail.value) detail.value = await apiFetch<IncidentDetail>(`/incidents/${detail.value.id}`);
+  if (detail.value) {
+    detail.value = await apiFetch<IncidentDetail>(`/incidents/${detail.value.id}`);
+    loadOoda(detail.value.id);
+  }
   await load();
 }
 
@@ -165,6 +183,7 @@ async function runAttribution() {
   try {
     await apiFetch(`/agents/incidents/${detail.value.id}/attribution`, { method: "POST" });
     await loadAttributions(detail.value.id);
+    loadOoda(detail.value.id);
   } catch (e) {
     runMsg.value = e instanceof ApiError ? e.message : "Gagal menjalankan ELANG-3";
   } finally {
@@ -200,7 +219,7 @@ async function validateHyp(h: Attribution, decision: "validated" | "rejected") {
   aiBusy.value = true; runMsg.value = null;
   try {
     await apiFetch(`/agents/attribution/${h.id}/validate`, { method: "POST", body: { status: decision } });
-    if (detail.value) await loadAttributions(detail.value.id);
+    if (detail.value) { await loadAttributions(detail.value.id); loadOoda(detail.value.id); }
   } catch (e) {
     runMsg.value = e instanceof ApiError ? e.message : "Gagal memvalidasi";
   } finally {
@@ -233,6 +252,7 @@ async function runPlaybook(mode: "auto" | "dry_run") {
       "/soar/run", { method: "POST", body: { incident_id: detail.value.id, mode } },
     );
     runMsg.value = `${t("incident.runStarted")}: ${r.playbook_code} → ${r.status}`;
+    loadOoda(detail.value.id);
   } catch (e) {
     runMsg.value = e instanceof ApiError ? e.message : "Gagal";
   }
@@ -258,7 +278,17 @@ function noteTone(kind: string): "ok" | "warn" | "danger" | "muted" {
   return "muted";
 }
 
-onMounted(load);
+// Deep-link dari peta segmen Situasi: /incidents?open=<id>.
+const route = useRoute();
+const router = useRouter();
+onMounted(() => {
+  load();
+  const openId = Number(route.query.open);
+  if (Number.isInteger(openId) && openId > 0) {
+    openDetail(openId);
+    router.replace({ query: { ...route.query, open: undefined } });
+  }
+});
 watch([severity, status, activeOnly], load);
 </script>
 
@@ -340,7 +370,7 @@ watch([severity, status, activeOnly], load);
     <div v-if="items.length" class="text-xs text-ink-dim">{{ total }} {{ t("incident.title").toLowerCase() }}</div>
 
     <!-- Detail insiden + case management -->
-    <Modal v-model:open="detailOpen" :title="t('incident.detail')">
+    <Modal v-model:open="detailOpen" size="lg" :title="t('incident.detail')">
       <div v-if="detail" class="space-y-3">
         <div class="flex flex-wrap items-center gap-2">
           <SeverityBadge :severity="(detail.severity as Sev)" />
@@ -383,6 +413,13 @@ watch([severity, status, activeOnly], load);
               </tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Alur investigasi OODA (read-only, dari data tercatat) -->
+        <div>
+          <div class="mb-1 text-xs text-ink-muted">Alur investigasi (OODA)</div>
+          <OodaFlow v-if="ooda" :data="ooda" />
+          <SkeletonRow v-else :rows="2" />
         </div>
 
         <!-- Linimasa kasus -->
