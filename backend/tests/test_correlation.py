@@ -144,3 +144,29 @@ def test_incident_rbac(client, make_user, db_session):
     assert client.get("/incidents", headers=bearer(aud)).status_code == 200
     assert client.post(f"/incidents/{iid}/status", headers=bearer(aud),
                        json={"status": "closed"}).status_code == 403
+
+
+def test_staged_attack_on_one_host_becomes_one_incident(db_session):
+    """Demo bertahap: brute force lalu beaconing pada host yang sama → satu insiden
+    berisi alert aturan (T1110) dan alert ELANG-1 (T1071) dengan skor."""
+    from app.simulator import generate_baseline, scenario_beaconing, scenario_bruteforce
+
+    host = "app-logistik-01"
+    seed_assets(db_session, record_audit=False)
+    generate_baseline(db_session, days=14, record_audit=False)
+    scenario_bruteforce(db_session, target=host, record_audit=False)
+    scenario_beaconing(db_session, target=host, record_audit=False)
+    seed_rules(db_session)
+    run_detection(db_session, record_audit=False)
+
+    alerts = db_session.execute(select(Alert).where(Alert.host == host)).scalars().all()
+    codes = {a.rule_code for a in alerts}
+    assert "PNX-BF-001" in codes
+    ml = [a for a in alerts if a.rule_code == "PNX-ELANG1-001"]
+    assert ml and ml[0].anomaly_score is not None
+
+    correlate(db_session, record_audit=False)
+    incidents = db_session.execute(select(Incident).where(Incident.host == host)).scalars().all()
+    assert len(incidents) == 1
+    techs = {t["technique"] for t in incidents[0].techniques}
+    assert {"T1110", "T1071"} <= techs

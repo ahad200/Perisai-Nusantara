@@ -95,3 +95,34 @@ def test_non_operator_cannot_trigger_simulation(client, make_user):
     tok = _token(client, make_user, "aud", Role.AUDITOR)
     r = client.post("/dev/simulate", headers=bearer(tok), json={"scenario": "bruteforce"})
     assert r.status_code == 403
+
+
+# --- Target skenario (demo bertahap & serentak) ---
+
+def test_scenario_rejects_unknown_target(db_session):
+    import pytest
+    seed_assets(db_session, record_audit=False)
+    with pytest.raises(ValueError, match="Target tak dikenal"):
+        scenario_ransomware(db_session, target="tidak-ada-01", record_audit=False)
+
+
+def test_simulate_ransomware_on_multiple_targets(client, make_user):
+    tok = _token(client, make_user, "op", Role.OPERATOR)
+    r = client.post("/dev/simulate", headers=bearer(tok), json={
+        "scenario": "ransomware", "targets": ["ws-staff-05", "cmd-core-01"],
+    })
+    assert r.status_code == 200, r.text
+    targets = [i["target"] for i in r.json()["results"]]
+    assert targets == ["ws-staff-05", "cmd-core-01"]
+    ev = client.get("/events?scenario=ransomware&host=cmd-core-01", headers=bearer(tok)).json()
+    assert ev["total"] > 0
+
+
+def test_simulate_rejects_bad_targets(client, make_user):
+    tok = _token(client, make_user, "op", Role.OPERATOR)
+    r = client.post("/dev/simulate", headers=bearer(tok),
+                    json={"scenario": "bruteforce", "targets": ["tidak-ada-01"]})
+    assert r.status_code == 400
+    r = client.post("/dev/simulate", headers=bearer(tok),
+                    json={"scenario": "all", "targets": ["ws-staff-05"]})
+    assert r.status_code == 400

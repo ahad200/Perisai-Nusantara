@@ -160,6 +160,8 @@ Simulator (data simulasi) — lihat `app/simulator/`:
 python -m app.simulator seed-assets        # tanam armada aset K1/K2/K3
 python -m app.simulator baseline --days 14 # baseline historis bersih
 python -m app.simulator attack all         # bruteforce + beaconing + ransomware
+python -m app.simulator attack ransomware --target ws-staff-01 --target cmd-core-01  # serentak
+python -m app.simulator targets            # daftar host target
 ```
 Atau dari UI: login sebagai `operator` → halaman **Event** → "Jalankan skenario"
 (endpoint `POST /dev/simulate`, hanya non-produksi).

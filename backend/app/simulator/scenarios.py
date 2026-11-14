@@ -33,8 +33,18 @@ def _now(end: datetime | None) -> datetime:
     return (end or datetime.now(timezone.utc)).replace(microsecond=0)
 
 
+def fleet_hostnames() -> list[str]:
+    """Hostname armada yang bisa dijadikan target skenario."""
+    return [fa.hostname for fa in FLEET]
+
+
 def _asset(hostname: str):
-    return next(fa for fa in FLEET if fa.hostname == hostname)
+    fa = next((fa for fa in FLEET if fa.hostname == hostname), None)
+    if fa is None:
+        raise ValueError(
+            f"Target tak dikenal: {hostname!r}. Pilihan: {', '.join(fleet_hostnames())}"
+        )
+    return fa
 
 
 def scenario_bruteforce(

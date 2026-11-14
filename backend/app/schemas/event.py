@@ -43,6 +43,9 @@ class EventPage(BaseModel):
 class SimRunRequest(BaseModel):
     scenario: Literal["baseline", "bruteforce", "beaconing", "ransomware", "all"]
     days: int = Field(default=14, ge=1, le=60)
+    # Hostname target skenario serangan (boleh lebih dari satu = serentak).
+    # Kosong = target bawaan skenario. Tidak berlaku untuk baseline/all.
+    targets: list[str] = Field(default_factory=list, max_length=20)
 
 
 class SimRunItem(BaseModel):

@@ -17,7 +17,7 @@ from app.models.user import User
 from app.schemas.event import SimRunItem, SimRunRequest, SimRunResponse
 from app.simulator.baseline import generate_baseline
 from app.simulator.fleet import seed_assets
-from app.simulator.scenarios import SCENARIOS, run_all_scenarios
+from app.simulator.scenarios import SCENARIOS, fleet_hostnames, run_all_scenarios
 
 router = APIRouter(prefix="/dev", tags=["dev-simulator"])
 
@@ -38,6 +38,19 @@ def simulate(
 ) -> SimRunResponse:
     _guard_non_prod()
 
+    targets = list(dict.fromkeys(body.targets))  # buang duplikat, jaga urutan
+    if targets and body.scenario in ("baseline", "all"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Target hanya berlaku untuk skenario serangan tunggal",
+        )
+    unknown = [t for t in targets if t not in fleet_hostnames()]
+    if unknown:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Target tak dikenal: {', '.join(unknown)}",
+        )
+
     # Aset harus ada sebelum event bisa ditautkan.
     created = seed_assets(db)
     results: list[SimRunItem] = []
@@ -51,8 +64,10 @@ def simulate(
         for r in run_all_scenarios(db):
             results.append(SimRunItem(name=r.name, technique=r.technique, target=r.target, count=r.count))
     else:
-        r = SCENARIOS[body.scenario](db)
-        results.append(SimRunItem(name=r.name, technique=r.technique, target=r.target, count=r.count))
+        fn = SCENARIOS[body.scenario]
+        runs = [fn(db, target=t) for t in targets] if targets else [fn(db)]
+        for r in runs:
+            results.append(SimRunItem(name=r.name, technique=r.technique, target=r.target, count=r.count))
 
     audit.record(
         db,
@@ -61,7 +76,7 @@ def simulate(
         actor_id=actor.username,
         object_type="simulator",
         object_id=body.scenario,
-        payload={"scenario": body.scenario, "days": body.days,
+        payload={"scenario": body.scenario, "days": body.days, "targets": targets,
                  "assets_created": len(created), "total_events": sum(i.count for i in results)},
     )
 

@@ -123,6 +123,21 @@ async function openDetail(row: EventRow) {
 const simOpen = ref(false);
 const simRunning = ref<string | null>(null);
 const simMsg = ref<string | null>(null);
+// Target opsional (hostname). Kosong = target bawaan skenario. Lebih dari satu = serentak.
+interface SimTarget { hostname: string; criticality: string; segment: string }
+const simTargets = ref<SimTarget[]>([]);
+const simSelected = ref<string[]>([]);
+const TARGETABLE = new Set(["bruteforce", "beaconing", "ransomware"]);
+async function loadSimTargets() {
+  if (simTargets.value.length) return;
+  try {
+    simTargets.value = await apiFetch<SimTarget[]>("/assets");
+  } catch {
+    simTargets.value = [];
+  }
+}
+watch(simOpen, (open) => { if (open) loadSimTargets(); });
+
 const SIM_OPTIONS = [
   { key: "baseline", labelKey: "sim.baseline" },
   { key: "bruteforce", labelKey: "sim.bruteforce" },
@@ -134,12 +149,13 @@ async function runSim(key: string) {
   simRunning.value = key;
   simMsg.value = null;
   try {
-    const res = await apiFetch<{ results: { count: number }[] }>("/dev/simulate", {
+    const res = await apiFetch<{ results: { count: number; target: string | null }[] }>("/dev/simulate", {
       method: "POST",
-      body: { scenario: key, days: 14 },
+      body: { scenario: key, days: 14, targets: TARGETABLE.has(key) ? simSelected.value : [] },
     });
     const totalEv = res.results.reduce((a, r) => a + r.count, 0);
-    simMsg.value = `${t("sim.done")}: ${totalEv} ${t("sim.events")}`;
+    const hosts = res.results.map((r) => r.target).filter(Boolean).join(", ");
+    simMsg.value = `${t("sim.done")}: ${totalEv} ${t("sim.events")}${hosts ? ` → ${hosts}` : ""}`;
     await load(true);
   } catch (e) {
     simMsg.value = e instanceof ApiError ? e.message : "Gagal";
@@ -253,6 +269,17 @@ onMounted(() => load(true));
     <!-- Simulator -->
     <Modal v-model:open="simOpen" :title="t('sim.title')">
       <p class="mb-3 text-sm text-ink-muted">{{ t("sim.note") }}</p>
+      <fieldset v-if="simTargets.length" class="mb-3">
+        <legend class="mb-1 text-xs text-ink-muted">{{ t("sim.targets") }}</legend>
+        <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+          <label v-for="a in simTargets" :key="a.hostname" class="flex items-center gap-2 text-sm text-ink">
+            <input v-model="simSelected" type="checkbox" :value="a.hostname" class="accent-[var(--accent)]" />
+            <CritBadge :level="a.criticality" />
+            <span class="font-mono">{{ a.hostname }}</span>
+          </label>
+        </div>
+        <p class="mt-1 text-xs text-ink-dim">{{ t("sim.targetsHint") }}</p>
+      </fieldset>
       <div class="space-y-2">
         <AppButton
           v-for="opt in SIM_OPTIONS"
@@ -260,7 +287,7 @@ onMounted(() => load(true));
           size="sm"
           class="w-full !justify-start"
           :loading="simRunning === opt.key"
-          :disabled="simRunning !== null"
+          :disabled="simRunning !== null || (simSelected.length > 0 && !TARGETABLE.has(opt.key))"
           @click="runSim(opt.key)"
         >
           {{ $t(opt.labelKey) }}
