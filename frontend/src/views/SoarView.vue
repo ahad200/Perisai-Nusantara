@@ -19,6 +19,7 @@ interface Approval {
   id: number; action: string; severity: string; criticality: string;
   required_tier: string; status: string; on_timeout: string;
   deadline: string | null; incident_id: number | null; run_id: number;
+  host: string | null;
 }
 interface ActionExec {
   id: number; step_index: number; action: string; params: Record<string, unknown>;
@@ -82,10 +83,20 @@ async function load() {
   }
 }
 
+// Aset K1: persetujuan dikonfirmasi ulang dengan mengetik nama aset (PRD Lampiran C).
+const confirmHost = ref<Record<number, string>>({});
+function needsTypedHost(a: Approval): boolean {
+  return a.criticality === "K1" && !!a.host;
+}
+function canConfirm(a: Approval): boolean {
+  return !needsTypedHost(a) || (confirmHost.value[a.id] ?? "").trim() === a.host;
+}
+
 async function resolve(id: number, decision: "approve" | "deny") {
   busy.value = true;
   try {
-    await apiFetch(`/soar/approvals/${id}/resolve`, { method: "POST", body: { decision } });
+    const confirm_host = (confirmHost.value[id] ?? "").trim();
+    await apiFetch(`/soar/approvals/${id}/resolve`, { method: "POST", body: { decision, confirm_host } });
     await load();
   } catch (e) {
     error.value = e instanceof ApiError ? e.message : "Gagal";
@@ -176,6 +187,7 @@ onMounted(load);
               <tr class="border-b border-edge bg-graphite-raised text-left text-xs uppercase tracking-wide text-ink-muted">
                 <th class="px-3 py-2">{{ $t("soar.severity") }}</th>
                 <th class="px-3 py-2">{{ $t("soar.criticality") }}</th>
+                <th class="px-3 py-2">{{ $t("soar.host") }}</th>
                 <th class="px-3 py-2">{{ $t("soar.action") }}</th>
                 <th class="px-3 py-2">{{ $t("soar.tier") }}</th>
                 <th class="px-3 py-2">{{ $t("soar.deadline") }}</th>
@@ -186,12 +198,22 @@ onMounted(load);
               <tr v-for="a in approvals" :key="a.id" class="border-b border-edge/60 last:border-0">
                 <td class="px-3 py-1.5"><SeverityBadge :severity="(a.severity as Sev)" /></td>
                 <td class="px-3 py-1.5"><CritBadge :level="a.criticality" /></td>
+                <td class="px-3 py-1.5 font-mono text-ink">{{ a.host ?? "—" }}</td>
                 <td class="px-3 py-1.5 font-mono text-ink">{{ a.action }}</td>
                 <td class="px-3 py-1.5 font-mono text-xs text-ink-muted">{{ normalizeRole(a.required_tier) }}</td>
                 <td class="px-3 py-1.5 font-mono text-xs text-ink-dim">{{ a.deadline ? formatWIB(a.deadline) : "—" }}</td>
                 <td class="px-3 py-1.5 text-right">
-                  <div v-if="canApprove" class="flex justify-end gap-1.5">
-                    <AppButton size="sm" variant="primary" @click="resolve(a.id, 'approve')">{{ $t("soar.approve") }}</AppButton>
+                  <div v-if="canApprove" class="flex items-center justify-end gap-1.5">
+                    <input
+                      v-if="needsTypedHost(a)"
+                      v-model="confirmHost[a.id]"
+                      :placeholder="$t('soar.typeHost', { host: a.host })"
+                      :aria-label="$t('soar.typeHost', { host: a.host })"
+                      autocomplete="off"
+                      spellcheck="false"
+                      class="h-8 w-48 rounded border border-edge bg-graphite-base px-2 font-mono text-xs text-ink placeholder:text-ink-dim focus:border-accent"
+                    />
+                    <AppButton size="sm" variant="primary" :disabled="busy || !canConfirm(a)" @click="resolve(a.id, 'approve')">{{ $t("soar.approve") }}</AppButton>
                     <AppButton size="sm" variant="danger" @click="resolve(a.id, 'deny')">{{ $t("soar.deny") }}</AppButton>
                   </div>
                 </td>

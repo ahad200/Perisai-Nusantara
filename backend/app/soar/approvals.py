@@ -57,11 +57,24 @@ def _recompute_run(db: Session, run_id: int) -> None:
         run.status = RunStatus.COMPLETED.value
 
 
+class ConfirmationError(ValueError):
+    """Konfirmasi nama aset (K1) tidak cocok."""
+
+
+def approval_host(db: Session, ap: Approval) -> str | None:
+    run = db.get(PlaybookRun, ap.run_id)
+    return run.host if run is not None else None
+
+
 def resolve_approval(
     db: Session, approval_id: int, *, approver: str, approver_role: str,
-    decision: str, note: str = "", record_audit: bool = True,
+    decision: str, note: str = "", confirm_host: str = "", record_audit: bool = True,
 ) -> Approval:
-    """Approve/deny sebuah approval. `decision` ∈ {approve, deny}."""
+    """Approve/deny sebuah approval. `decision` ∈ {approve, deny}.
+
+    Untuk aset **K1**, persetujuan wajib dikonfirmasi ulang dengan mengetik nama
+    aset (`confirm_host`) — PRD Lampiran C (layar Approval).
+    """
     ap = db.get(Approval, approval_id)
     if ap is None:
         raise ValueError("Approval tidak ditemukan")
@@ -69,6 +82,13 @@ def resolve_approval(
         raise ValueError(f"Approval sudah berstatus {ap.status}")
     if not can_approve(approver_role, ap.required_tier):
         raise PermissionError(f"Butuh pangkat approver '{ap.required_tier}'")
+
+    if decision == "approve" and ap.criticality == "K1":
+        host = approval_host(db, ap)
+        if host and confirm_host.strip() != host:
+            raise ConfirmationError(
+                f"Aset K1: ketik nama aset '{host}' untuk mengonfirmasi persetujuan"
+            )
 
     ae = db.get(ActionExecution, ap.action_execution_id)
     ap.approver = approver

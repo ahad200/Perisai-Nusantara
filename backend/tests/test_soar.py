@@ -173,9 +173,16 @@ def test_responder_runs_and_commander_approves(client, make_user, db_session):
     deny = client.post(f"/soar/approvals/{ap_id}/resolve", headers=bearer(t2), json={"decision": "approve"})
     assert deny.status_code == 403
 
-    # Commander menyetujui → aksi dieksekusi.
+    # Commander menyetujui aset K1 → wajib mengetik nama aset (PRD Lampiran C).
     cmd = _token(client, make_user, "cmd", Role.COMMANDER)
-    ok = client.post(f"/soar/approvals/{ap_id}/resolve", headers=bearer(cmd), json={"decision": "approve"})
+    pending = client.get("/soar/approvals", headers=bearer(cmd)).json()
+    assert next(a for a in pending if a["id"] == ap_id)["host"] == "dc-api"
+    for wrong in ({}, {"confirm_host": "dc-ap"}, {"confirm_host": "DC-API"}):
+        bad = client.post(f"/soar/approvals/{ap_id}/resolve", headers=bearer(cmd),
+                          json={"decision": "approve", **wrong})
+        assert bad.status_code == 400, wrong
+    ok = client.post(f"/soar/approvals/{ap_id}/resolve", headers=bearer(cmd),
+                     json={"decision": "approve", "confirm_host": "dc-api"})
     assert ok.status_code == 200 and ok.json()["status"] == "approved"
     detail = client.get(f"/soar/runs/{run['id']}", headers=bearer(resp)).json()
     isolate = next(a for a in detail["actions"] if a["action"] == "isolate_host")
@@ -208,3 +215,40 @@ def test_break_glass_auto_executes_non_k1(client, make_user, db_session):
     # Break-glass → high×K2 (biasanya approval) jadi auto.
     assert run["status"] == "completed"
     assert all(a["status"] == "executed" for a in run["actions"])
+
+
+def test_k1_deny_and_non_k1_approve_need_no_typed_host(client, make_user, db_session):
+    seed_playbooks(db_session)
+    cmd = _token(client, make_user, "cmd3", Role.COMMANDER)
+    resp = _token(client, make_user, "resp3", Role.OPERATOR)
+
+    # K1: menolak tidak butuh konfirmasi nama aset.
+    k1 = _incident(db_session, severity="critical", crit=Criticality.K1, technique="T1486", host="k1-deny")
+    run = client.post("/soar/run", headers=bearer(resp), json={"incident_id": k1.id}).json()
+    ap_id = next(a["approval_id"] for a in run["actions"] if a["approval_id"])
+    r = client.post(f"/soar/approvals/{ap_id}/resolve", headers=bearer(cmd), json={"decision": "deny"})
+    assert r.status_code == 200 and r.json()["status"] == "denied"
+
+    # K2: approve tanpa mengetik nama aset tetap boleh.
+    k2 = _incident(db_session, severity="high", crit=Criticality.K2, technique="T1110", host="k2-ok")
+    run = client.post("/soar/run", headers=bearer(resp), json={"incident_id": k2.id}).json()
+    ap_id = next(a["approval_id"] for a in run["actions"] if a["approval_id"])
+    r = client.post(f"/soar/approvals/{ap_id}/resolve", headers=bearer(cmd), json={"decision": "approve"})
+    assert r.status_code == 200 and r.json()["status"] == "approved"
+
+
+def test_playbook_follows_most_severe_alert_technique(db_session):
+    """Insiden ransomware (T1036 high + T1486 critical) memakai playbook T1486."""
+    from app.models.alert import Alert
+
+    seed_playbooks(db_session)
+    inc = _incident(db_session, severity="critical", crit=Criticality.K3, technique="T1036", host="ws-pick")
+    inc.techniques = [{"technique": "T1036", "name": "Masquerading"},
+                      {"technique": "T1486", "name": "Data Encrypted for Impact"}]
+    for code, sev, tech in (("A", "high", "T1036"), ("B", "critical", "T1486")):
+        db_session.add(Alert(rule_code=code, severity=sev, technique=tech, host="ws-pick",
+                             incident_id=inc.id, dedup_key=f"pick:{code}"))
+    db_session.commit()
+
+    run = run_playbook(db_session, incident_id=inc.id, record_audit=False)
+    assert run.playbook_code == "PNX-PB-RANSOM"

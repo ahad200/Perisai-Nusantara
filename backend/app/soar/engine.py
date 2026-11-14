@@ -14,7 +14,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import audit
+from app.models.alert import Alert
 from app.models.asset import Asset, Criticality, resolve_criticality
+from app.models.detection import SEVERITY_RANK
 from app.models.incident import Incident
 from app.models.soar import (
     ActionExecution,
@@ -44,6 +46,28 @@ def _resolve_criticality(db: Session, incident: Incident) -> str:
     return resolve_criticality(crit).value  # fail-safe K1 (§A.5 no.6)
 
 
+def _pick_playbook(db: Session, incident: Incident) -> Playbook | None:
+    """Playbook untuk teknik dari alert ber-severity tertinggi yang punya playbook.
+
+    Mis. insiden ransomware berisi T1036 (high) + T1486 (critical) → playbook T1486.
+    Fallback: urutan teknik pada insiden.
+    """
+    from app.soar.playbooks import playbook_for_technique
+
+    rows = db.execute(
+        select(Alert.technique, Alert.severity)
+        .where(Alert.incident_id == incident.id)
+        .order_by(Alert.id)
+    ).all()
+    ranked = [t for t, _ in sorted(rows, key=lambda r: -SEVERITY_RANK.get(r[1], 0)) if t]
+    fallback = [t["technique"] for t in incident.techniques or []]
+    for tech in dict.fromkeys([*ranked, *fallback]):
+        pb = playbook_for_technique(db, tech)
+        if pb is not None:
+            return pb
+    return None
+
+
 def _audit_action(db, actor, ae: ActionExecution, action: str, payload: dict) -> None:
     audit.record(db, action=action, actor_type="user", actor_id=actor,
                  object_type="action_execution", object_id=str(ae.id), payload=payload)
@@ -68,14 +92,12 @@ def run_playbook(
     if incident is None:
         raise ValueError("Insiden tidak ditemukan")
 
-    # Pilih playbook: eksplisit, atau berdasarkan teknik insiden (langkah pertama).
+    # Pilih playbook: eksplisit, atau dari teknik alert ber-severity tertinggi.
     pb: Playbook | None = None
     if playbook_code:
         pb = db.execute(select(Playbook).where(Playbook.code == playbook_code)).scalars().first()
     if pb is None:
-        from app.soar.playbooks import playbook_for_technique
-        primary_tech = incident.techniques[0]["technique"] if incident.techniques else None
-        pb = playbook_for_technique(db, primary_tech)
+        pb = _pick_playbook(db, incident)
     if pb is None:
         raise ValueError("Tidak ada playbook yang cocok untuk insiden ini")
 

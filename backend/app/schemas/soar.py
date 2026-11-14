@@ -78,6 +78,7 @@ class ApprovalOut(BaseModel):
     severity: str
     criticality: str
     required_tier: str
+    host: str | None = None
     status: str
     on_timeout: str
     approver: str | None
@@ -110,6 +111,8 @@ class RunRequest(BaseModel):
 class ResolveApprovalRequest(BaseModel):
     decision: Literal["approve", "deny"]
     note: str = Field(default="", max_length=512)
+    # Wajib untuk approve aset K1: nama aset diketik ulang (PRD Lampiran C).
+    confirm_host: str = Field(default="", max_length=255)
 
 
 class BreakGlassRequest(BaseModel):

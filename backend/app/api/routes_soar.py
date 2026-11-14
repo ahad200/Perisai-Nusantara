@@ -43,6 +43,7 @@ from app.soar import (
     run_playbook,
     seed_playbooks,
 )
+from app.soar.approvals import approval_host
 from app.soar.notify import active_break_glass
 
 router = APIRouter(prefix="/soar", tags=["soar"])
@@ -142,11 +143,18 @@ def list_approvals(
     _: User = Depends(require_permission(Permission.SOAR_READ)),
     db: Session = Depends(get_db),
     status_: str | None = Query(default="pending", alias="status"),
-) -> list[Approval]:
-    stmt = select(Approval).order_by(Approval.id.desc())
+) -> list[ApprovalOut]:
+    stmt = (
+        select(Approval, PlaybookRun.host)
+        .outerjoin(PlaybookRun, PlaybookRun.id == Approval.run_id)
+        .order_by(Approval.id.desc())
+    )
     if status_:
         stmt = stmt.where(Approval.status == status_)
-    return list(db.execute(stmt).scalars().all())
+    return [
+        ApprovalOut.model_validate(ap).model_copy(update={"host": host})
+        for ap, host in db.execute(stmt).all()
+    ]
 
 
 @router.post("/approvals/{approval_id}/resolve", response_model=ApprovalOut)
@@ -155,16 +163,17 @@ def resolve(
     body: ResolveApprovalRequest,
     actor: User = Depends(require_permission(Permission.SOAR_APPROVE)),
     db: Session = Depends(get_db),
-) -> Approval:
+) -> ApprovalOut:
     try:
-        return resolve_approval(
+        ap = resolve_approval(
             db, approval_id, approver=actor.username, approver_role=actor.role,
-            decision=body.decision, note=body.note,
+            decision=body.decision, note=body.note, confirm_host=body.confirm_host,
         )
     except PermissionError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return ApprovalOut.model_validate(ap).model_copy(update={"host": approval_host(db, ap)})
 
 
 @router.post("/approvals/process-timeouts", response_model=TimeoutResult)
