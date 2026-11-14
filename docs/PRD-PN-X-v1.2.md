@@ -1,5 +1,5 @@
 # PRD — "PERISAI NUSANTARA" (PN-X)
-**Platform Pertahanan Siber Adaptif Mabes TNI**
+**Platform Pertahanan Siber Adaptif TNI Angkatan Darat (TNI AD)**
 
 | Field | Detail |
 |---|---|
@@ -8,7 +8,7 @@
 | Versi Dokumen | **1.2** |
 | Pemilik Produk | Ketua Tim Cyber (Cyber Commander) |
 | Klasifikasi | Tidak rahasia — dokumen prototipe (seluruh data simulasi) |
-| Afiliasi | Proyek independen; **bukan** dokumen atau produk resmi TNI |
+| Afiliasi | Proyek independen; **bukan** dokumen atau produk resmi TNI AD |
 | Target Rilis MVP | 6 bulan setelah F0 selesai (lihat §13) |
 | Target Rilis Full | 18 bulan |
 | Status | Draft — Menunggu Persetujuan |
@@ -126,7 +126,7 @@ audit (tidak ada endpoint mutasi audit sama sekali).
 ## 4. Ruang Lingkup & Out of Scope
 
 ### 4.1 In Scope
-- Deteksi, investigasi, dan respons terhadap ancaman **di dalam jaringan dan aset milik/yang dikelola TNI**.
+- Deteksi, investigasi, dan respons terhadap ancaman **di dalam jaringan dan aset milik/yang dikelola TNI AD**.
 - Tindakan respons defensif: isolasi host/segmen, blokir IP/domain di perangkat sendiri, revoke kredensial/token, karantina file, menonaktifkan akun.
 - Deception di dalam jaringan sendiri (honeypot, honeytoken, canary token).
 - Simulasi serangan (BAS) terhadap aset sendiri, dalam scope dan jendela waktu yang disetujui.

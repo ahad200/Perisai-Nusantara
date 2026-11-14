@@ -27,12 +27,12 @@ class FleetAsset:
 # Armada contoh: 2 K1 (misi-kritis), 3 K2 (penting), 6 K3 (umum).
 FLEET: tuple[FleetAsset, ...] = (
     # K1 — misi-kritis (sistem komando & domain inti).
-    FleetAsset("cmd-core-01", "10.10.1.10", "komando", "Pusdatin TNI", Criticality.K1, ("komando", "server")),
-    FleetAsset("dc-root-01", "10.10.1.11", "inti", "Pusdatin TNI", Criticality.K1, ("domain-controller", "server")),
+    FleetAsset("cmd-core-01", "10.10.1.10", "komando", "Disinfolahtad", Criticality.K1, ("komando", "server")),
+    FleetAsset("dc-root-01", "10.10.1.11", "inti", "Disinfolahtad", Criticality.K1, ("domain-controller", "server")),
     # K2 — penting (server aplikasi pendukung & administrasi).
     FleetAsset("app-logistik-01", "10.10.2.20", "aplikasi", "Slog", Criticality.K2, ("aplikasi", "server")),
     FleetAsset("app-personel-01", "10.10.2.21", "aplikasi", "Spers", Criticality.K2, ("aplikasi", "server")),
-    FleetAsset("db-pendukung-01", "10.10.2.22", "aplikasi", "Pusdatin TNI", Criticality.K2, ("database", "server")),
+    FleetAsset("db-pendukung-01", "10.10.2.22", "aplikasi", "Disinfolahtad", Criticality.K2, ("database", "server")),
     # K3 — umum (endpoint pengguna).
     FleetAsset("ws-staff-01", "10.10.3.31", "pengguna", "Staf Umum", Criticality.K3, ("endpoint", "workstation")),
     FleetAsset("ws-staff-02", "10.10.3.32", "pengguna", "Staf Umum", Criticality.K3, ("endpoint", "workstation")),

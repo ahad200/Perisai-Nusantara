@@ -131,7 +131,7 @@ final tetap dari rule engine. Output selalu **draf** → tinjauan manusia.
 ## Fase 4 — Aksi respons nyata ⚠️ RISIKO TINGGI, bertahap, perlu otorisasi
 
 Ini satu-satunya lapisan yang benar-benar menyentuh perangkat produksi. **Jangan** aktifkan
-tanpa otorisasi Mabes TNI + uji di lab terisolasi.
+tanpa otorisasi pejabat TNI AD yang berwenang + uji di lab terisolasi.
 
 ### 4a. Implementasi adapter nyata
 
