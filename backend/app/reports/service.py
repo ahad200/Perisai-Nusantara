@@ -448,6 +448,19 @@ def _render_compliance(pdf: PdfReport, d: dict) -> None:
     )
 
 
+def _wib(iso: str | None) -> str:
+    """ISO UTC naif (format data laporan) → 'YYYY-MM-DD HH:MM:SS WIB'."""
+    if not iso:
+        return "-"
+    try:
+        dt = datetime.fromisoformat(iso)
+    except ValueError:
+        return iso
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return (dt + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S WIB")
+
+
 def _render_incident(pdf: PdfReport, d: dict) -> None:
     pdf.heading("Ringkasan Insiden")
     pdf.kv("Severity", str(d.get("severity", "-")))
@@ -456,15 +469,15 @@ def _render_incident(pdf: PdfReport, d: dict) -> None:
     pdf.kv("Penanggung jawab", str(d.get("assignee") or "-"))
     pdf.kv("Jumlah alert", str(d.get("alert_count", 0)))
     pdf.kv("Teknik ATT&CK", ", ".join(d.get("techniques", [])) or "-")
-    pdf.kv("Event pertama", str(d.get("first_event_ts") or "-"))
-    pdf.kv("Event terakhir", str(d.get("last_event_ts") or "-"))
+    pdf.kv("Event pertama", _wib(d.get("first_event_ts")))
+    pdf.kv("Event terakhir", _wib(d.get("last_event_ts")))
 
     tl = d.get("timeline", [])
     if tl:
         pdf.heading("Linimasa")
         pdf.table(
             ["Waktu", "Aktor", "Jenis", "Catatan"],
-            [[t.get("at") or "-", t.get("author") or "-", t.get("kind") or "-", t.get("body") or ""] for t in tl],
+            [[_wib(t.get("at")), t.get("author") or "-", t.get("kind") or "-", t.get("body") or ""] for t in tl],
             widths=[2.4, 1.4, 1.2, 4],
         )
 

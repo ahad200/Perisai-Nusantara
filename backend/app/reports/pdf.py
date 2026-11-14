@@ -18,10 +18,16 @@ MARGIN = 50.0
 _AVG_W = 0.52
 
 
+# Karakter di luar WinAnsiEncoding (cp1252) → padanan ASCII agar tak jadi "?".
+_FALLBACK = str.maketrans({
+    "→": "->", "←": "<-", "≥": ">=", "≤": "<=", "≠": "!=", "−": "-", "✓": "v",
+})
+
+
 def _esc(text: str) -> str:
-    """Escape untuk literal string PDF + paksa ke latin-1 (WinAnsiEncoding)."""
+    """Escape untuk literal string PDF + paksa ke cp1252 (WinAnsiEncoding)."""
     out = text.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
-    return out.encode("latin-1", "replace").decode("latin-1")
+    return out.translate(_FALLBACK).encode("cp1252", "replace").decode("cp1252")
 
 
 def _max_chars(width: float, size: float) -> int:
@@ -207,7 +213,7 @@ def _assemble(pages: list[list[str]]) -> bytes:
     add(b"PLACEHOLDER_PAGES")  # diisi belakangan
     page_obj_nums: list[int] = []
     for page in pages:
-        stream = ("\n".join(page)).encode("latin-1", "replace")
+        stream = ("\n".join(page)).encode("cp1252", "replace")
         content_num = add(
             b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream"
         )

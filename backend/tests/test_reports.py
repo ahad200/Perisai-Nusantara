@@ -190,3 +190,16 @@ def test_rbac_only_approver_can_approve(client, make_user, db_session):
     assert g.status_code == 201
     rid = g.json()["id"]
     assert client.post(f"/reports/{rid}/approve", headers=bearer(tok)).status_code == 403
+
+
+def test_pdf_keeps_dashes_and_uses_wib():
+    """Em dash (WinAnsi 0x97) tak berubah jadi '?'; waktu insiden tampil dalam WIB."""
+    from app.reports import pdf as pdfmod
+
+    assert pdfmod._esc("A — B · C → D ≥ 2") == "A — B · C -> D >= 2"
+    doc = pdfmod.PdfReport()
+    doc.title("Laporan Insiden INC-1 — host")
+    out = doc.render()
+    assert b"INC-1 \x97 host" in out
+    assert svc._wib("2026-11-14T11:03:49") == "2026-11-14 18:03:49 WIB"
+    assert svc._wib(None) == "-"
