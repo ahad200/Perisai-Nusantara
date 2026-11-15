@@ -202,7 +202,7 @@ docker compose exec api python -m app.demo # isi data demo
 | `backend/app/agents` | ELANG-2/3/6: sandbox prompt, grounding klaim, validasi skema, LLM lokal |
 | `frontend/` | Vue 3 + Vite + Tailwind, design tokens (PRD Lampiran C), i18n id/en |
 
-Status milestone lengkap ada di [`CLAUDE.md`](CLAUDE.md) dan PRD §A.3.
+Status milestone lengkap ada di PRD §A.3 ([`docs/PRD-PN-X-v1.2.md`](docs/PRD-PN-X-v1.2.md)).
 
 ## Prinsip keamanan
 - **Audit immutable**: entri audit tidak pernah di-update/hapus. Setiap entri merantai hash
